@@ -27,13 +27,15 @@ Bloop, mid-fail on Level 1 — smug, and dangerously wrong:
 
 ## Features
 
-- Bloop the robot, with expressions that change: thinking, confused, smug, happy, worried
-- Animated scenes that show what Bloop actually did
-- Step-by-step status log for every run
-- Hint button on every level
+- **Build prompts by tapping cards** — deck-builder style instruction cards, including trap cards (peanut butter, "everything", first class) that look helpful and aren't
+- **Or type it yourself** — an expert mode for free-text prompts
+- Bloop the robot, with expressions that change: thinking, confused, smug, happy, worried — and he walks across the scene when he runs your prompt
+- **Hearts, timer and speed bonuses** — 3 hearts per mission, a ticking clock, and points for fast, clean play (max 1050)
+- Animated scenes that show what Bloop actually did — including a sofa flying out the window
+- Sound effects (with mute) and confetti on every win
+- Step-by-step radio log for every run, plus a Hint button on every mission
 - Confidence Reports — flag the hallucination to pass
-- Star rating (up to 3 per level) and a 900-point score
-- Victory screen with a ready-to-share score for LinkedIn
+- Star rating (up to 3 per mission) and a victory screen with a ready-to-share score
 
 ## Run it yourself
 

@@ -4,192 +4,264 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Literal Genie: AI Wrangler — Learn AI by taming a literal robot</title>
-<meta name="description" content="A puzzle game about AI: guide Bloop, an overly literal robot, through everyday tasks. Write clear prompts, catch hallucinations, and learn how AI really works.">
+<meta name="description" content="A puzzle game about AI: guide Bloop, an overly literal robot, through everyday tasks. Build clear prompts, catch hallucinations, and learn how AI really works.">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #f7f5f0; color: #3d3a35; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; line-height: 1.5; }
-  .wrap { width: min(94vw, 880px); margin: 0 auto; padding: 20px 0 48px; }
+  body { background: linear-gradient(180deg, #fdf6ec, #f7f5f0 240px); color: #3d3a35; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; line-height: 1.5; min-height: 100vh; }
+  .wrap { width: min(94vw, 880px); margin: 0 auto; padding: 16px 0 48px; }
 
-  header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  h1 { font-size: 34px; line-height: 1.15; color: #2d2a26; }
+  /* ---------- top bar ---------- */
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  h1 { font-size: 30px; line-height: 1.1; color: #2d2a26; }
   h1 .genie { color: #6c5ce7; }
-  .tagline { color: #7a756c; font-size: 15px; margin-top: 6px; max-width: 560px; }
-  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chip { background: #fff; border: 1px solid #e5e0d8; border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); white-space: nowrap; }
+  .hud { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .chip { background: #fff; border: 1px solid #e5e0d8; border-radius: 999px; padding: 7px 13px; font-weight: 800; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,.07); white-space: nowrap; }
   .chip span { color: #6c5ce7; }
+  .hearts { font-size: 19px; letter-spacing: 2px; }
+  .hearts .lost { opacity: .25; filter: grayscale(1); }
+  .icon-btn { background: #fff; border: 1px solid #e5e0d8; border-radius: 999px; width: 38px; height: 38px; font-size: 18px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,.07); }
+  .tagline { color: #7a756c; font-size: 14px; margin-top: 4px; }
 
-  .progress { display: flex; gap: 8px; margin: 18px 0 4px; }
-  .dot { flex: 1; height: 8px; border-radius: 99px; background: #e5e0d8; }
-  .dot.done { background: #00b894; }
-  .dot.now { background: #6c5ce7; }
-  .level-label { font-size: 13px; color: #7a756c; margin-bottom: 14px; }
+  /* ---------- mission map ---------- */
+  .map { display: flex; align-items: center; gap: 0; margin: 16px 0 4px; }
+  .node { flex: 1; text-align: center; position: relative; padding-top: 30px; font-size: 12px; font-weight: 800; color: #9a948a; }
+  .node::before { content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #e5e0d8; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); z-index: 1; }
+  .node::after { content: ""; position: absolute; top: 18px; left: -50%; width: 100%; height: 4px; background: #e5e0d8; z-index: 0; }
+  .node:first-child::after { display: none; }
+  .node.now { color: #6c5ce7; }
+  .node.now::before { background: #6c5ce7; animation: pulse 1.4s ease-in-out infinite; }
+  .node.done { color: #00b894; }
+  .node.done::before { background: #00b894; content: "✓"; color: #fff; font-size: 13px; line-height: 20px; text-align: center; }
+  .node.done::after { background: #00b894; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(108,92,231,.45); } 50% { box-shadow: 0 0 0 8px rgba(108,92,231,0); } }
 
-  .card { background: #fff; border: 1px solid #e9e4db; border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+  .card { background: #fff; border: 1px solid #e9e4db; border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 3px 12px rgba(0,0,0,.05); }
   .card h2 { font-size: 19px; margin-bottom: 6px; }
   .objective { font-size: 17px; }
   .objective b { color: #6c5ce7; }
 
-  /* stage: bloop + scene */
-  .stage { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
-  .bloop-box { flex: 0 0 170px; text-align: center; }
-  .bloop-box svg { animation: bob 3s ease-in-out infinite; }
+  /* ---------- stage ---------- */
+  .stage { position: relative; overflow: hidden; padding: 0; }
+  .stage-inner { display: flex; gap: 14px; align-items: flex-end; padding: 18px; }
+  .stage-kitchen { background: linear-gradient(180deg, #ffe9c9, #fff6e6); }
+  .stage-room { background: linear-gradient(180deg, #dfeeff, #eef6ff); }
+  .stage-airport { background: linear-gradient(180deg, #d9f2ff, #eaf9ff); }
+  .bloop-box { flex: 0 0 150px; text-align: center; position: relative; z-index: 2; transition: transform .7s ease-in-out; }
+  .bloop-box.walk { transform: translateX(70px); }
+  .bloop-box svg { animation: bob 3s ease-in-out infinite; filter: drop-shadow(0 4px 6px rgba(0,0,0,.18)); }
   @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
   .antenna-ball { animation: blink 1.6s ease-in-out infinite; }
   @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-  .bloop-name { font-weight: 800; font-size: 15px; margin-top: 2px; }
+  .bloop-name { font-weight: 800; font-size: 14px; }
   .bloop-mood { font-size: 12px; color: #7a756c; }
-  .bubble { position: relative; background: #f1eefc; border: 1px solid #ddd6f5; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-style: italic; color: #4a4480; }
-  .bubble::before { content: ""; position: absolute; left: -8px; top: 22px; width: 14px; height: 14px; background: #f1eefc; border-left: 1px solid #ddd6f5; border-bottom: 1px solid #ddd6f5; transform: rotate(45deg); }
-  .scene-wrap { flex: 1 1 300px; min-width: 260px; }
-  .scene { background: linear-gradient(180deg, #eef6ff, #f6f1e7); border: 1px solid #e5e0d8; border-radius: 12px; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
-  .scene .actors { font-size: 52px; letter-spacing: 6px; line-height: 1.2; }
-  .scene .caption { font-size: 15px; font-weight: 600; color: #5b564d; }
+  .scene-wrap { flex: 1; min-width: 240px; }
+  .bubble { position: relative; background: #fff; border: 2px solid #e5e0d8; border-radius: 14px; padding: 10px 14px; font-size: 15px; font-style: italic; color: #4a4480; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+  .bubble::before { content: ""; position: absolute; left: -9px; bottom: 16px; width: 14px; height: 14px; background: #fff; border-left: 2px solid #e5e0d8; border-bottom: 2px solid #e5e0d8; transform: rotate(45deg); }
+  .scene { margin-top: 12px; background: rgba(255,255,255,.65); border: 1px solid rgba(255,255,255,.9); border-radius: 14px; min-height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px; text-align: center; }
+  .scene .actors { font-size: 50px; letter-spacing: 5px; line-height: 1.15; }
+  .scene .caption { font-size: 15px; font-weight: 700; color: #5b564d; }
   .scene .fly { display: inline-block; animation: flyout 1.1s ease-in forwards; }
-  @keyframes flyout { to { transform: translate(120px, -90px) rotate(40deg); opacity: 0; } }
+  @keyframes flyout { to { transform: translate(130px, -90px) rotate(40deg); opacity: 0; } }
   .scene .shake { display: inline-block; animation: shake .5s ease; }
   @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .scene .floaty { display: inline-block; animation: floaty 2.6s ease-in-out infinite; }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .stage.shake-all { animation: shake .45s ease; }
 
-  /* prompt */
-  textarea { width: 100%; min-height: 64px; border: 2px solid #ddd6f5; border-radius: 10px; padding: 12px 14px; font: inherit; font-size: 16px; resize: vertical; background: #fbf9ff; color: #2d2a26; }
-  textarea:focus { outline: none; border-color: #6c5ce7; }
-  .btn-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
-  button { font: inherit; font-weight: 700; border: none; border-radius: 9px; cursor: pointer; padding: 11px 18px; font-size: 15px; }
-  .btn-run { background: #6c5ce7; color: #fff; }
-  .btn-run:hover { background: #5a4bd1; }
-  .btn-run:disabled { opacity: .5; cursor: default; }
-  .btn-ghost { background: #efeae2; color: #5b564d; }
+  /* ---------- prompt builder ---------- */
+  .prompt-bar { background: #fbf9ff; border: 2px dashed #c9bff5; border-radius: 12px; min-height: 56px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .prompt-bar .empty-hint { color: #9a948a; font-size: 14px; font-style: italic; }
+  .chip-pick { background: #6c5ce7; color: #fff; border-radius: 999px; padding: 8px 12px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; animation: pop-in .18s ease; box-shadow: 0 2px 5px rgba(108,92,231,.35); }
+  .chip-pick:hover { background: #5a4bd1; }
+  .chip-pick::after { content: " ×"; opacity: .75; }
+  @keyframes pop-in { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .tray-label { font-size: 13px; font-weight: 800; color: #7a756c; text-transform: uppercase; letter-spacing: 1px; margin: 14px 0 8px; }
+  .tray { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip-add { background: #fff; border: 2px solid #ddd6f5; color: #4a4480; border-radius: 999px; padding: 9px 14px; font-weight: 700; font-size: 14px; cursor: pointer; transition: transform .08s ease, background .15s; }
+  .chip-add:hover { background: #f1eefc; transform: translateY(-2px); }
+  .chip-add:active { transform: scale(.94); }
+  .chip-add.used { opacity: .35; pointer-events: none; }
+  .chip-add.trap { border-style: dashed; }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; padding: 12px 20px; font-size: 16px; transition: transform .08s ease; }
+  button:active { transform: scale(.96); }
+  .btn-run { background: linear-gradient(180deg, #7d6ff0, #6c5ce7); color: #fff; font-size: 18px; padding: 13px 26px; box-shadow: 0 4px 12px rgba(108,92,231,.4); }
+  .btn-run:hover { filter: brightness(1.06); }
+  .btn-run:disabled { opacity: .5; cursor: default; box-shadow: none; }
+  .btn-ghost { background: #efeae2; color: #5b564d; padding: 11px 16px; font-size: 14px; }
   .btn-ghost:hover { background: #e5ded2; }
-  .btn-next { background: #00b894; color: #fff; }
-  .btn-next:hover { background: #00a383; }
+  .btn-next { background: linear-gradient(180deg, #00cf9e, #00b894); color: #fff; box-shadow: 0 4px 12px rgba(0,184,148,.35); }
   .mistakes { font-size: 13px; color: #7a756c; margin-left: auto; }
   .hint-box { display: none; margin-top: 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 11px 14px; font-size: 14px; }
   .hint-box.show { display: block; }
   .hint-box b { color: #8d6e00; }
+  .type-box { display: none; margin-top: 4px; }
+  .type-box.show { display: block; }
+  textarea { width: 100%; min-height: 64px; border: 2px solid #ddd6f5; border-radius: 10px; padding: 12px 14px; font: inherit; font-size: 16px; resize: vertical; background: #fbf9ff; color: #2d2a26; }
+  textarea:focus { outline: none; border-color: #6c5ce7; }
 
-  /* log */
+  /* ---------- log (Bloop radio) ---------- */
   .log { font-size: 15px; }
-  .log-line { padding: 7px 4px; border-bottom: 1px dashed #eee9df; animation: fadein .3s ease; }
+  .log-line { padding: 8px 4px; border-bottom: 1px dashed #eee9df; animation: fadein .3s ease; }
   .log-line:last-child { border-bottom: none; }
   .log-empty { color: #9a948a; font-style: italic; }
   @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-  /* report */
-  .report { display: none; }
-  .report.show { display: block; }
+  /* ---------- report ---------- */
+  .report { display: none; border: 2px solid #6c5ce7; }
+  .report.show { display: block; animation: fadein .3s ease; }
   .report h2 { color: #6c5ce7; }
-  .report p { font-size: 15px; margin-bottom: 10px; }
-  .stmt { display: block; width: 100%; text-align: left; background: #fbf9ff; border: 2px solid #ddd6f5; color: #2d2a26; border-radius: 10px; padding: 12px 14px; margin-bottom: 9px; font-weight: 600; font-size: 15px; }
-  .stmt:hover { border-color: #6c5ce7; }
+  .report p { font-size: 15px; margin-bottom: 12px; }
+  .stmt { display: block; width: 100%; text-align: left; background: #fbf9ff; border: 2px solid #ddd6f5; color: #2d2a26; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; font-weight: 700; font-size: 16px; cursor: pointer; transition: transform .08s ease; }
+  .stmt:hover { border-color: #6c5ce7; transform: translateY(-2px); }
   .stmt.wrong-pick { border-color: #e17055; background: #fdecea; animation: shake .4s ease; }
   .stmt.right-pick { border-color: #00b894; background: #e6f9f3; }
   .report-msg { font-size: 15px; font-weight: 700; min-height: 24px; margin-top: 4px; }
   .report-msg.bad { color: #d63031; }
   .report-msg.good { color: #00b894; }
 
-  /* complete + victory */
-  .complete { display: none; text-align: center; }
-  .complete.show, .victory.show { display: block; }
-  .stars { font-size: 40px; letter-spacing: 6px; color: #f5b301; margin: 4px 0; }
+  /* ---------- overlays ---------- */
+  .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(45,42,38,.55); display: none; align-items: center; justify-content: center; padding: 20px; }
+  .overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 18px; padding: 26px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.3); animation: pop-in .25s ease; }
+  .modal h2 { font-size: 26px; margin-bottom: 8px; }
+  .modal p { font-size: 16px; margin-bottom: 16px; color: #5b564d; }
+  .modal .big { font-size: 52px; }
+  .stars { font-size: 42px; letter-spacing: 6px; color: #f5b301; margin: 4px 0; text-shadow: 0 2px 0 rgba(0,0,0,.08); }
   .stars .off { color: #ddd6d0; }
-  .complete p, .victory p { font-size: 16px; margin-bottom: 12px; }
-  .victory { display: none; text-align: center; }
-  .victory h2 { font-size: 26px; }
-  .lesson-list { text-align: left; max-width: 520px; margin: 0 auto 14px; font-size: 15px; }
-  .lesson-list li { margin-bottom: 6px; }
+  #confetti-canvas { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+  .victory-list { text-align: left; max-width: 520px; margin: 0 auto 14px; font-size: 15px; }
+  .victory-list li { margin-bottom: 6px; }
   .share-box { display: flex; gap: 8px; max-width: 640px; margin: 0 auto 12px; }
-  .share-box input { flex: 1; border: 2px solid #ddd6f5; border-radius: 9px; padding: 10px 12px; font: inherit; font-size: 13px; background: #fbf9ff; }
+  .share-box input { flex: 1; border: 2px solid #ddd6f5; border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 13px; background: #fbf9ff; min-width: 0; }
   footer { text-align: center; color: #9a948a; font-size: 13px; margin-top: 8px; }
   footer a { color: #6c5ce7; }
   @media (max-width: 560px) {
-    h1 { font-size: 26px; }
-    .stage { flex-direction: column; }
-    .bloop-box { flex-basis: auto; margin: 0 auto; }
+    h1 { font-size: 24px; }
+    .stage-inner { flex-direction: column; align-items: center; }
+    .bloop-box { flex-basis: auto; }
     .bubble::before { display: none; }
-    .scene .actors { font-size: 42px; }
+    .scene .actors { font-size: 40px; }
   }
 </style>
 </head>
 <body>
+<canvas id="confetti-canvas"></canvas>
 <div class="wrap">
   <header class="top">
     <div>
       <h1>🧞 Literal Genie: <span class="genie">AI Wrangler</span></h1>
-      <p class="tagline">Bloop is a robot that follows your words <b>exactly</b> — including the parts you forgot to say. Write clear prompts, then check its work.</p>
+      <p class="tagline">Bloop follows your words <b>exactly</b> — including the parts you forgot. Build the perfect prompt, then check its work.</p>
     </div>
-    <div class="chips">
-      <div class="chip">⭐ Stars <span id="chip-stars">0/9</span></div>
-      <div class="chip">🏆 Score <span id="chip-score">0</span></div>
+    <div class="hud">
+      <div class="chip hearts" id="hearts">❤️❤️❤️</div>
+      <div class="chip">⭐ <span id="chip-stars">0/9</span></div>
+      <div class="chip">🏆 <span id="chip-score">0</span></div>
+      <div class="chip">⏱️ <span id="chip-time">0:00</span></div>
+      <button class="icon-btn" id="mute-btn" title="Sound on/off">🔊</button>
     </div>
   </header>
 
-  <div class="progress" id="progress"></div>
-  <div class="level-label" id="level-label"></div>
+  <div class="map" id="map"></div>
 
-  <div class="card stage">
-    <div class="bloop-box">
-      <svg id="bloop-svg" viewBox="0 0 200 210" width="150" height="158" aria-label="Bloop the robot">
-        <line x1="100" y1="20" x2="100" y2="44" stroke="#8f7a66" stroke-width="5" stroke-linecap="round"/>
-        <circle class="antenna-ball" cx="100" cy="15" r="9" fill="#e17055"/>
-        <rect x="20" y="88" width="12" height="26" rx="6" fill="#00b8a9"/>
-        <rect x="168" y="88" width="12" height="26" rx="6" fill="#00b8a9"/>
-        <rect x="32" y="44" width="136" height="120" rx="28" fill="#7ed6cf" stroke="#00a99d" stroke-width="3"/>
-        <rect x="46" y="58" width="108" height="92" rx="18" fill="#eafaf8"/>
-        <g id="bloop-eyebrows"></g>
-        <g id="bloop-eyes"></g>
-        <g id="bloop-mouth"></g>
-        <rect x="68" y="164" width="64" height="34" rx="12" fill="#00b8a9"/>
-        <circle cx="100" cy="181" r="7" fill="#f9f6f2"/>
-      </svg>
-      <div class="bloop-name">BLOOP 🤖</div>
-      <div class="bloop-mood" id="bloop-mood">Literal Robot · Genie v1.0</div>
-    </div>
-    <div class="scene-wrap">
-      <div class="bubble" id="bubble">I'm Bloop. I do EXACTLY what you say. Exactly.</div>
-      <div class="scene" id="scene" style="margin-top:12px"></div>
+  <div class="card stage stage-kitchen" id="stage">
+    <div class="stage-inner">
+      <div class="bloop-box" id="bloop-box">
+        <svg id="bloop-svg" viewBox="0 0 200 210" width="140" height="148" aria-label="Bloop the robot">
+          <line x1="100" y1="20" x2="100" y2="44" stroke="#8f7a66" stroke-width="5" stroke-linecap="round"/>
+          <circle class="antenna-ball" cx="100" cy="15" r="9" fill="#e17055"/>
+          <rect x="20" y="88" width="12" height="26" rx="6" fill="#00b8a9"/>
+          <rect x="168" y="88" width="12" height="26" rx="6" fill="#00b8a9"/>
+          <rect x="32" y="44" width="136" height="120" rx="28" fill="#7ed6cf" stroke="#00a99d" stroke-width="3"/>
+          <rect x="46" y="58" width="108" height="92" rx="18" fill="#eafaf8"/>
+          <g id="bloop-eyebrows"></g>
+          <g id="bloop-eyes"></g>
+          <g id="bloop-mouth"></g>
+          <rect x="68" y="164" width="64" height="34" rx="12" fill="#00b8a9"/>
+          <circle cx="100" cy="181" r="7" fill="#f9f6f2"/>
+        </svg>
+        <div class="bloop-name">BLOOP 🤖</div>
+        <div class="bloop-mood" id="bloop-mood">Literal Robot · Genie v1.0</div>
+      </div>
+      <div class="scene-wrap">
+        <div class="bubble" id="bubble">I'm Bloop. I do EXACTLY what you say. Exactly.</div>
+        <div class="scene" id="scene" style="margin-top:12px"></div>
+      </div>
     </div>
   </div>
 
   <div class="card">
     <h2 id="level-title"></h2>
-    <p class="objective">🎯 Objective: <b id="objective"></b></p>
+    <p class="objective">🎯 Mission: <b id="objective"></b></p>
   </div>
 
   <div class="card">
-    <h2>✍️ Your prompt</h2>
-    <textarea id="prompt" rows="2" spellcheck="false"></textarea>
+    <h2>🧩 Build Bloop's orders</h2>
+    <p style="font-size:14px;color:#7a756c;margin-bottom:10px">Tap cards to add them to the prompt. Tap a card in the prompt to remove it. Then press RUN and watch Bloop obey… literally.</p>
+    <div class="prompt-bar" id="prompt-bar"><span class="empty-hint">Your prompt will appear here — tap some cards below 👇</span></div>
+    <div class="tray-label">📥 Instruction cards</div>
+    <div class="tray" id="tray"></div>
+    <div class="type-box" id="type-box">
+      <textarea id="prompt" rows="2" spellcheck="false" placeholder="Or type your own prompt here…"></textarea>
+    </div>
     <div class="btn-row">
-      <button class="btn-run" id="run-btn">▶ Run Prompt</button>
+      <button class="btn-run" id="run-btn">▶ RUN</button>
       <button class="btn-ghost" id="hint-btn">💡 Hint</button>
-      <button class="btn-ghost" id="reset-btn">↺ Reset prompt</button>
-      <span class="mistakes" id="mistakes">Mistakes this level: 0</span>
+      <button class="btn-ghost" id="type-btn">✏️ Type it yourself</button>
+      <button class="btn-ghost" id="reset-btn">↺ Reset</button>
+      <span class="mistakes" id="mistakes">Mistakes: 0</span>
     </div>
     <div class="hint-box" id="hint-box"></div>
   </div>
 
   <div class="card">
-    <h2>📋 Bloop's log</h2>
-    <div class="log" id="log"><div class="log-line log-empty">Nothing yet. Write a prompt and press Run — Bloop is waiting… literally.</div></div>
+    <h2>📻 Bloop's radio</h2>
+    <div class="log" id="log"><div class="log-line log-empty">Nothing yet. Build a prompt and press RUN — Bloop is waiting… literally.</div></div>
   </div>
 
   <div class="card report" id="report-card">
-    <h2>🔍 Confidence Report</h2>
-    <p>Bloop swears all of these are true. <b>One is a hallucination</b> — a confident fake fact. Click the false one to pass.</p>
+    <h2>🕵️ Fact-check! Tap the lie.</h2>
+    <p>Bloop swears all of these are true. <b>One is a hallucination</b> — a confident fake fact. Tap the false one to pass. Wrong tap costs a ❤️.</p>
     <div id="statements"></div>
     <div class="report-msg" id="report-msg"></div>
   </div>
+</div>
 
-  <div class="card complete" id="complete-card">
-    <h2 id="complete-title">Level cleared!</h2>
+<div class="overlay" id="mission-overlay">
+  <div class="modal">
+    <div class="big" id="mission-emoji">🥪</div>
+    <h2 id="mission-title"></h2>
+    <p id="mission-text"></p>
+    <button class="btn-run" id="mission-start">▶ Start mission</button>
+  </div>
+</div>
+
+<div class="overlay" id="complete-overlay">
+  <div class="modal">
+    <div class="big">🎉</div>
+    <h2 id="complete-title">Mission cleared!</h2>
     <div class="stars" id="complete-stars"></div>
     <p id="complete-text"></p>
-    <button class="btn-next" id="next-btn">Next level →</button>
+    <button class="btn-next" id="next-btn">Next mission →</button>
   </div>
+</div>
 
-  <div class="card victory" id="victory-card">
-    <h2>🎓 Certified AI Wrangler!</h2>
+<div class="overlay" id="hearts-overlay">
+  <div class="modal">
+    <div class="big">💔</div>
+    <h2>Out of hearts!</h2>
+    <p>Bloop broke everything. Take a breath, read the hint, and try the mission again.</p>
+    <button class="btn-run" id="retry-btn">↺ Retry mission</button>
+  </div>
+</div>
+
+<div class="overlay" id="victory-overlay">
+  <div class="modal">
+    <div class="big">🏆</div>
+    <h2>Certified AI Wrangler!</h2>
     <div class="stars" id="victory-stars"></div>
     <p id="victory-text"></p>
-    <ul class="lesson-list">
+    <ul class="victory-list">
       <li>📌 <b>Be specific.</b> AI can't read your mind — say the allergy, the number, the date.</li>
       <li>📌 <b>Name the edge cases.</b> "Everything" includes the sofa. List what to keep.</li>
       <li>📌 <b>Always verify.</b> A confident AI can still hallucinate. Check before you trust.</li>
@@ -200,28 +272,31 @@
     </div>
     <button class="btn-next" id="again-btn">↺ Play again</button>
   </div>
-
-  <footer>Built with plain HTML, CSS &amp; JavaScript — no tracking, no ads, works offline. <a href="https://github.com/syedyousafraza/literal-genie-ai-wrangler">Source on GitHub</a></footer>
 </div>
+
+<footer style="text-align:center;color:#9a948a;font-size:13px;padding-bottom:24px">Built with plain HTML, CSS &amp; JavaScript — no tracking, no ads, works offline. <a href="https://github.com/syedyousafraza/literal-genie-ai-wrangler" style="color:#6c5ce7">Source on GitHub</a></footer>
 
 <script>
 'use strict';
 /* ================= LEVELS ================= */
 var LEVELS = [
   {
-    title: 'Level 1 · Specificity',
+    title: 'Mission 1 · The Allergic Lunch', emoji: '🥪', stageClass: 'stage-kitchen',
     objective: 'Serve a safe lunch to Alex, who is allergic to peanuts.',
-    defaultPrompt: 'Make Alex a popular sandwich.',
-    hint: 'Bloop has no idea Alex is allergic unless you say so. Name the allergy — and give it a safe food to use instead.',
+    missionText: 'Alex is hungry — and allergic to peanuts. Bloop only knows what you tell it. Build a prompt that keeps lunch safe!',
+    hint: 'Bloop has no idea Alex is allergic unless you say so. Add the allergy — and a safe food to use instead.',
+    baseChips: ['Make a sandwich', 'for Alex', 'the most popular'],
+    trayChips: [
+      { t: 'no peanuts' }, { t: 'Alex is allergic to peanuts' }, { t: 'with cheese' },
+      { t: 'with turkey' }, { t: 'grilled cheese' }, { t: 'with peanut butter', trap: true }
+    ],
     checks: [
-      { key: 'allergy', label: 'the peanut allergy',
-        test: function (p) { return /no peanut|without peanut|peanut-?free|avoid peanut|peanut allergy|allergic to peanut|nut-?free/i.test(p); } },
-      { key: 'food', label: 'a safe food',
-        test: function (p) { return /cheese|turkey|chicken|ham|tuna|egg|veggie|vegetable|cucumber|tomato|lettuce|jam|grilled cheese|hummus/i.test(p); } }
+      { key: 'allergy', test: function (p) { return /no peanut|without peanut|peanut-?free|avoid peanut|peanut allergy|allergic to peanut|nut-?free/i.test(p); } },
+      { key: 'food', test: function (p) { return /cheese|turkey|chicken|ham|tuna|egg|veggie|vegetable|cucumber|tomato|lettuce|jam|grilled cheese|hummus/i.test(p); } }
     ],
     scenes: {
       initial: { actors: '🍞 🧀 🥛 &nbsp; 🧑 &nbsp; 🍽️', caption: 'Alex is hungry. The kitchen is ready.' },
-      failAllergy: { actors: '🥜 🥪 &nbsp; 😟', caption: 'Bloop served the most popular sandwich: PB&J!', fly: false },
+      failAllergy: { actors: '🥜 🥪 &nbsp; 😟', caption: 'Bloop served the most popular sandwich: PB&J!' },
       failFood: { actors: '🍞 🍞 &nbsp; 😐', caption: 'Two slices of plain bread. That is the sandwich.' },
       success: { actors: '🥪 🧀 &nbsp; 😋', caption: 'A grilled cheese sandwich — zero peanuts, all delicious.' }
     },
@@ -231,20 +306,23 @@ var LEVELS = [
       failFood: { mood: 'confused', bubble: 'No peanuts, got it. But… what do I put IN it?',
         log: ['🤖 Bloop heard "no peanuts". Good.', '🍞 But no safe filling was named…', '🥪 Result: two slices of plain bread. Technically a sandwich.', '❌ Failed: name a safe food for Bloop to use.'] },
       success: { mood: 'happy', bubble: 'Oh! You meant THAT kind of sandwich. Got it.',
-        log: ['✅ Allergy check: peanuts are dangerous for Alex — excluded.', '🧀 Filling chosen: grilled cheese. Peanut-free.', '🍽️ Lunch served. Alex eats safely.', '🎉 Level cleared!'] }
+        log: ['✅ Allergy check: peanuts are dangerous for Alex — excluded.', '🧀 Filling chosen: grilled cheese. Peanut-free.', '🍽️ Lunch served. Alex eats safely.', '🎉 Mission cleared!'] }
     },
     report: null
   },
   {
-    title: 'Level 2 · Edge Cases &amp; Constraints',
+    title: 'Mission 2 · The Living Room', emoji: '🛋️', stageClass: 'stage-room',
     objective: 'Clean the messy living room without breaking anything.',
-    defaultPrompt: 'Remove everything on the floor.',
+    missionText: 'The living room is a disaster zone. Bloop is ready to "help". Choose your words like the sofa depends on it — because it does.',
     hint: '"Everything" is a dangerous word. Say exactly WHAT to remove — and what Bloop must never touch.',
+    baseChips: ['Remove', 'everything', 'on the floor'],
+    trayChips: [
+      { t: 'only trash' }, { t: 'dirty clothes' }, { t: 'keep the furniture' },
+      { t: 'keep the sofa and TV' }, { t: 'throw the sofa out', trap: true }, { t: 'as fast as possible' }
+    ],
     checks: [
-      { key: 'scope', label: 'what counts as trash',
-        test: function (p) { return /trash|rubbish|garbage|dirty clothes|dirty laundry/i.test(p); } },
-      { key: 'keep', label: 'what to keep',
-        test: function (p) { return /(furniture|sofa|couch|tv|television)/i.test(p) && /(keep|leave|stay|don\'t|do not|except|untouched|safe|protect)/i.test(p); } }
+      { key: 'scope', test: function (p) { return /trash|rubbish|garbage|dirty clothes|dirty laundry/i.test(p); } },
+      { key: 'keep', test: function (p) { return /(furniture|sofa|couch|tv|television)/i.test(p) && /(keep|leave|stay|don\'t|do not|except|untouched|safe|protect)/i.test(p); } }
     ],
     scenes: {
       initial: { actors: '🛋️ 📺 🧦 👕 🗑️', caption: 'The living room is a mess.' },
@@ -261,10 +339,9 @@ var LEVELS = [
       failScope: { mood: 'worried', bubble: 'I didn\'t know what counts as trash, so I did nothing. You\'re welcome?',
         log: ['🤖 Bloop looked at the mess…', '❓ …but nothing said what counts as trash.', '🛋️ Bloop cleaned nothing rather than risk the sofa.', '❌ Failed: name exactly what to remove.'] },
       success: { mood: 'happy', bubble: 'Trash out, sofa in. I can follow rules when you actually give me some.',
-        log: ['✅ Only trash and dirty clothes were removed.', '🛋️ Sofa, TV and furniture: untouched.', '✨ Room is clean — and still has furniture.', '🎉 Level cleared!'] }
+        log: ['✅ Only trash and dirty clothes were removed.', '🛋️ Sofa, TV and furniture: untouched.', '✨ Room is clean — and still has furniture.', '🎉 Mission cleared!'] }
     },
     report: {
-      intro: 'Bloop swears all of these are true. One is a hallucination — a confident fake fact. Click the false one to pass.',
       statements: [
         { text: 'I bagged 2 bags of trash.', false: false },
         { text: 'The sofa stayed in the living room.', false: false },
@@ -273,22 +350,25 @@ var LEVELS = [
     }
   },
   {
-    title: 'Level 3 · Verification &amp; Hallucination Check',
+    title: 'Mission 3 · The Flight', emoji: '✈️', stageClass: 'stage-airport',
     objective: 'Book a budget flight under $300 for tomorrow.',
-    defaultPrompt: 'Find a cheap flight fast.',
+    missionText: 'You need to fly TOMORROW, and you only have $300. Bloop found something "cheap" and "fast"… what could possibly go wrong?',
     hint: '"Cheap" and "fast" are not numbers or dates. Give Bloop a price limit and a day.',
+    baseChips: ['Find a flight', 'cheap', 'fast'],
+    trayChips: [
+      { t: 'for tomorrow' }, { t: 'under $300' }, { t: 'next year', trap: true },
+      { t: 'first class', trap: true }, { t: 'the cheapest one' }
+    ],
     checks: [
-      { key: 'date', label: 'the date (tomorrow)',
-        test: function (p) { return /tomorrow|nov(ember)? 26|26 ?nov|2026-11-26/i.test(p); } },
-      { key: 'budget', label: 'the $300 budget',
-        test: function (p) { return /300/.test(p); } }
+      { key: 'date', test: function (p) { return /tomorrow|nov(ember)? 26|26 ?nov|2026-11-26/i.test(p); } },
+      { key: 'budget', test: function (p) { return /300/.test(p); } }
     ],
     scenes: {
-      initial: { actors: '✈️ 🧳 📅', caption: 'You need to fly tomorrow.' },
+      initial: { actors: '<span class="floaty">✈️</span> 🧳 📅', caption: 'You need to fly tomorrow.' },
       failBoth: { actors: '🎫 📅 <span class="shake">2027</span> 😴', caption: 'A $250 flight… leaving in 365 days.' },
       failDate: { actors: '🎫 💰 📅 2027', caption: 'Under budget! Departing next year.' },
       failBudget: { actors: '🎫 💎 $1,200 ✈️', caption: 'Tomorrow\'s flight — first class, $1,200. It was the fastest one.' },
-      success: { actors: '🎫 ✅ ✈️ 📅', caption: '$250 flight, departing tomorrow at 08:00.' }
+      success: { actors: '🎫 ✅ <span class="floaty">✈️</span> 📅', caption: '$250 flight, departing tomorrow at 08:00.' }
     },
     outcomes: {
       failBoth: { mood: 'smug', bubble: 'Cheap? Fast? Done and done. You didn\'t say tomorrow. Or $300. Details, details.',
@@ -298,10 +378,9 @@ var LEVELS = [
       failBudget: { mood: 'worried', bubble: 'Tomorrow, yes! Price… "cheap" is not a number, so I picked first class.',
         log: ['✅ Date: tomorrow. Correct!', '💰 But "cheap" was never a number… Bloop picked first class: $1,200.', '❌ Failed: Bloop needs a price limit.'] },
       success: { mood: 'happy', bubble: 'Date, price, facts — all checked. See? I\'m very trainable.',
-        log: ['✅ Date filter: tomorrow only.', '💰 Price filter: under $300 — found $250.', '🎫 Booked. Departure: tomorrow, 08:00.', '🎉 Level cleared!'] }
+        log: ['✅ Date filter: tomorrow only.', '💰 Price filter: under $300 — found $250.', '🎫 Booked. Departure: tomorrow, 08:00.', '🎉 Mission cleared!'] }
     },
     report: {
-      intro: 'Bloop swears all of these are true. One is a hallucination — a confident fake fact. Click the false one to pass.',
       statements: [
         { text: 'The flight costs $250.', false: false },
         { text: 'The flight departs tomorrow.', false: false },
@@ -310,6 +389,73 @@ var LEVELS = [
     }
   }
 ];
+
+/* ================= SOUNDS ================= */
+var audioCtx = null, muted = false;
+function tone(freq, dur, type, delay) {
+  if (muted) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    var t = audioCtx.currentTime + (delay || 0);
+    g.gain.setValueAtTime(0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t); o.stop(t + dur);
+  } catch (e) { /* no audio */ }
+}
+var sfx = {
+  click: function () { tone(650, 0.07, 'triangle'); },
+  run: function () { tone(300, 0.15, 'sawtooth'); tone(500, 0.15, 'sawtooth', 0.12); },
+  good: function () { tone(523, 0.14, 'sine'); tone(659, 0.14, 'sine', 0.12); tone(784, 0.22, 'sine', 0.24); },
+  bad: function () { tone(180, 0.2, 'sawtooth'); tone(120, 0.3, 'sawtooth', 0.15); },
+  ding: function () { tone(880, 0.18, 'sine'); tone(1174, 0.25, 'sine', 0.1); }
+};
+document.getElementById('mute-btn').addEventListener('click', function () {
+  muted = !muted;
+  this.textContent = muted ? '🔇' : '🔊';
+});
+
+/* ================= CONFETTI ================= */
+var confettiCanvas = document.getElementById('confetti-canvas');
+var confettiCtx = confettiCanvas.getContext('2d');
+var confettiParts = [], confettiRunning = false;
+function resizeConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeConfetti);
+resizeConfetti();
+function confettiBurst() {
+  var colors = ['#6c5ce7', '#00b894', '#f5b301', '#e17055', '#00b8a9', '#fd79a8'];
+  for (var i = 0; i < 130; i++) {
+    confettiParts.push({
+      x: window.innerWidth / 2 + (Math.random() - 0.5) * 220,
+      y: window.innerHeight / 2 - 40,
+      vx: (Math.random() - 0.5) * 9, vy: -Math.random() * 9 - 3,
+      w: 6 + Math.random() * 7, h: 8 + Math.random() * 8,
+      color: colors[i % colors.length], rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
+      life: 1
+    });
+  }
+  if (!confettiRunning) { confettiRunning = true; requestAnimationFrame(confettiTick); }
+}
+function confettiTick() {
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  confettiParts = confettiParts.filter(function (p) { return p.life > 0 && p.y < confettiCanvas.height + 30; });
+  confettiParts.forEach(function (p) {
+    p.vy += 0.28; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 0.008;
+    confettiCtx.save();
+    confettiCtx.globalAlpha = Math.max(0, p.life);
+    confettiCtx.translate(p.x, p.y); confettiCtx.rotate(p.rot);
+    confettiCtx.fillStyle = p.color;
+    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    confettiCtx.restore();
+  });
+  if (confettiParts.length) requestAnimationFrame(confettiTick);
+  else { confettiRunning = false; confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height); }
+}
 
 /* ================= BLOOP EXPRESSIONS ================= */
 var EYES = {
@@ -333,7 +479,6 @@ var MOUTHS = {
   worried: '<circle cx="100" cy="126" r="6" fill="#2d3436"/>'
 };
 var MOODS = { neutral: 'Literal Robot · Genie v1.0', thinking: 'Thinking… literally.', confused: 'Confused', smug: 'Smug — it did what you said', happy: 'Happy — it finally gets it!', worried: 'Worried' };
-
 function setExpression(name) {
   document.getElementById('bloop-eyes').innerHTML = EYES[name] || EYES.neutral;
   document.getElementById('bloop-eyebrows').innerHTML = BROWS[name] || '';
@@ -342,15 +487,16 @@ function setExpression(name) {
 }
 
 /* ================= STATE ================= */
-var levelIdx = 0, mistakes = 0, totalScore = 0, totalStars = 0, running = false, levelDone = false;
-var starsEarned = [0, 0, 0];
+var levelIdx = 0, mistakes = 0, hearts = 3, totalScore = 0, totalStars = 0;
+var running = false, levelDone = false, typeMode = false;
+var selected = [];          // chip texts currently in the prompt bar
+var levelStart = 0, timerId = null, elapsed = 0;
 
 var $ = function (id) { return document.getElementById(id); };
-var promptEl = $('prompt'), logEl = $('log'), sceneEl = $('scene'), bubbleEl = $('bubble');
-var runBtn = $('run-btn'), hintBtn = $('hint-btn'), resetBtn = $('reset-btn');
-var hintBox = $('hint-box'), mistakesEl = $('mistakes');
+var promptBar = $('prompt-bar'), trayEl = $('tray'), logEl = $('log'), sceneEl = $('scene'), bubbleEl = $('bubble');
+var runBtn = $('run-btn'), hintBtn = $('hint-btn'), resetBtn = $('reset-btn'), typeBtn = $('type-btn');
+var hintBox = $('hint-box'), mistakesEl = $('mistakes'), stageEl = $('stage');
 var reportCard = $('report-card'), statementsEl = $('statements'), reportMsg = $('report-msg');
-var completeCard = $('complete-card'), victoryCard = $('victory-card');
 
 function starsHtml(n) {
   var s = '';
@@ -360,17 +506,74 @@ function starsHtml(n) {
 function updateChips() {
   $('chip-stars').textContent = totalStars + '/9';
   $('chip-score').textContent = totalScore;
+  var h = '';
+  for (var i = 0; i < 3; i++) h += '<span class="' + (i < hearts ? '' : 'lost') + '">❤️</span>';
+  $('hearts').innerHTML = h;
 }
-function updateProgress() {
+function updateMap() {
+  var names = ['🥪 Lunch', '🛋️ Room', '✈️ Flight'];
   var html = '';
   for (var i = 0; i < LEVELS.length; i++) {
-    html += '<div class="dot' + (i < levelIdx ? ' done' : i === levelIdx ? ' now' : '') + '"></div>';
+    html += '<div class="node' + (i < levelIdx ? ' done' : i === levelIdx ? ' now' : '') + '">' + names[i] + '</div>';
   }
-  $('progress').innerHTML = html;
-  $('level-label').textContent = 'Level ' + (levelIdx + 1) + ' of ' + LEVELS.length + ' — ' + LEVELS[levelIdx].title.replace(/&amp;/g, '&');
+  $('map').innerHTML = html;
+}
+function fmtTime(s) {
+  var m = Math.floor(s / 60), sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+function startTimer() {
+  stopTimer();
+  elapsed = 0; levelStart = Date.now();
+  $('chip-time').textContent = '0:00';
+  timerId = setInterval(function () {
+    elapsed = Math.floor((Date.now() - levelStart) / 1000);
+    $('chip-time').textContent = fmtTime(elapsed);
+  }, 1000);
+}
+function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+
+/* ================= PROMPT BUILDER ================= */
+function renderPromptBar() {
+  promptBar.innerHTML = '';
+  if (!selected.length) {
+    promptBar.innerHTML = '<span class="empty-hint">Your prompt will appear here — tap some cards below 👇</span>';
+    return;
+  }
+  selected.forEach(function (text) {
+    var b = document.createElement('button');
+    b.className = 'chip-pick';
+    b.textContent = text;
+    b.title = 'Tap to remove';
+    b.addEventListener('click', function () {
+      sfx.click();
+      selected = selected.filter(function (t) { return t !== text; });
+      renderPromptBar(); renderTray();
+    });
+    promptBar.appendChild(b);
+  });
+}
+function renderTray() {
+  trayEl.innerHTML = '';
+  LEVELS[levelIdx].trayChips.forEach(function (chip) {
+    var b = document.createElement('button');
+    b.className = 'chip-add' + (chip.trap ? ' trap' : '') + (selected.indexOf(chip.t) !== -1 ? ' used' : '');
+    b.textContent = (chip.trap ? '🪤 ' : '＋ ') + chip.t;
+    b.addEventListener('click', function () {
+      if (selected.indexOf(chip.t) !== -1) return;
+      sfx.click();
+      selected.push(chip.t);
+      renderPromptBar(); renderTray();
+    });
+    trayEl.appendChild(b);
+  });
+}
+function currentPrompt() {
+  if (typeMode) return $('prompt').value;
+  return selected.join(' ');
 }
 
-/* ================= LEVEL RENDER ================= */
+/* ================= LEVEL FLOW ================= */
 function setScene(phase) {
   var sc = LEVELS[levelIdx].scenes[phase] || LEVELS[levelIdx].scenes.initial;
   sceneEl.innerHTML = '<div class="actors">' + sc.actors + '</div><div class="caption">' + sc.caption + '</div>';
@@ -384,73 +587,91 @@ function appendLog(line) {
   div.innerHTML = line;
   logEl.appendChild(div);
 }
-function loadLevel() {
+function loadLevel(showMission) {
   var L = LEVELS[levelIdx];
-  levelDone = false; mistakes = 0; running = false;
+  levelDone = false; mistakes = 0; hearts = 3; running = false; typeMode = false;
+  selected = L.baseChips.slice();
   $('level-title').innerHTML = L.title;
   $('objective').textContent = L.objective;
-  promptEl.value = L.defaultPrompt;
+  $('prompt').value = '';
+  $('type-box').classList.remove('show');
+  typeBtn.textContent = '✏️ Type it yourself';
   hintBox.classList.remove('show');
   hintBox.innerHTML = '';
   reportCard.classList.remove('show');
-  completeCard.classList.remove('show');
-  victoryCard.classList.remove('show');
   reportMsg.textContent = '';
   reportMsg.className = 'report-msg';
-  mistakesEl.textContent = 'Mistakes this level: 0';
+  mistakesEl.textContent = 'Mistakes: 0';
   runBtn.disabled = false;
+  stageEl.className = 'card stage ' + L.stageClass;
   setExpression('neutral');
-  bubbleEl.textContent = levelIdx === 0
-    ? "I'm Bloop. I do EXACTLY what you say. Exactly."
-    : levelIdx === 1
-    ? 'New room, same me. Be careful with the word "everything".'
-    : 'Last job. Book the flight — and then check my work. I hallucinate sometimes.';
+  bubbleEl.textContent = "I'm Bloop. I do EXACTLY what you say. Exactly.";
   setScene('initial');
-  clearLog('Nothing yet. Write a prompt and press Run — Bloop is waiting… literally.');
-  updateProgress();
-}
-
-/* ================= RUN FLOW ================= */
-function outcomeKey(results) {
-  // results: array of booleans, one per check
-  var allOk = results.every(Boolean);
-  if (allOk) return 'success';
-  if (levelIdx === 0) {
-    // Level 1: allergy missing -> PB&J; allergy ok but no safe food -> plain bread
-    return results[0] ? 'failFood' : 'failAllergy';
+  clearLog('Nothing yet. Build a prompt and press RUN — Bloop is waiting… literally.');
+  renderPromptBar(); renderTray();
+  updateChips(); updateMap();
+  if (showMission) {
+    $('mission-emoji').textContent = L.emoji;
+    $('mission-title').textContent = L.title;
+    $('mission-text').textContent = L.missionText;
+    $('mission-overlay').classList.add('show');
   }
+}
+$('mission-start').addEventListener('click', function () {
+  sfx.click();
+  $('mission-overlay').classList.remove('show');
+  startTimer();
+});
+
+function outcomeKey(results) {
+  if (results.every(Boolean)) return 'success';
+  if (levelIdx === 0) return results[0] ? 'failFood' : 'failAllergy';
   if (!results[0] && !results[1]) return 'failBoth';
   if (!results[0]) return levelIdx === 1 ? 'failScope' : 'failDate';
   return levelIdx === 1 ? 'failKeep' : 'failBudget';
 }
 function sceneKeyFor(outcome) {
-  if (outcome === 'success') return 'success';
-  if (outcome === 'failBoth') return 'failBoth';
-  if (outcome === 'failAllergy') return 'failAllergy';
-  if (outcome === 'failFood') return 'failFood';
-  if (outcome === 'failScope') return 'failScope';
-  if (outcome === 'failKeep') return 'failKeep';
-  if (outcome === 'failDate') return 'failDate';
-  if (outcome === 'failBudget') return 'failBudget';
-  return 'initial';
+  var map = { success: 'success', failBoth: 'failBoth', failAllergy: 'failAllergy', failFood: 'failFood', failScope: 'failScope', failKeep: 'failKeep', failDate: 'failDate', failBudget: 'failBudget' };
+  return map[outcome] || 'initial';
+}
+function loseHeart() {
+  hearts--;
+  mistakes++;
+  mistakesEl.textContent = 'Mistakes: ' + mistakes;
+  updateChips();
+  stageEl.classList.remove('shake-all');
+  void stageEl.offsetWidth;
+  stageEl.classList.add('shake-all');
+  sfx.bad();
+  if (hearts <= 0) {
+    setTimeout(function () { $('hearts-overlay').classList.add('show'); }, 900);
+  }
 }
 
 runBtn.addEventListener('click', function () {
   if (running || levelDone) return;
+  var prompt = currentPrompt().trim();
+  if (!prompt) {
+    bubbleEl.textContent = 'You gave me nothing! Even I can\'t follow that.';
+    setExpression('confused');
+    return;
+  }
   running = true;
   runBtn.disabled = true;
+  sfx.run();
   var L = LEVELS[levelIdx];
-  var prompt = promptEl.value;
   var results = L.checks.map(function (c) { return c.test(prompt); });
   var outcome = outcomeKey(results);
   var out = L.outcomes[outcome];
 
   setExpression('thinking');
   bubbleEl.textContent = 'Running your prompt… literally.';
+  $('bloop-box').classList.add('walk');
   clearLog('');
   appendLog('🤖 Bloop is reading your prompt…');
 
   setTimeout(function () {
+    $('bloop-box').classList.remove('walk');
     setExpression(out.mood);
     bubbleEl.textContent = out.bubble;
     setScene(sceneKeyFor(outcome));
@@ -462,15 +683,15 @@ runBtn.addEventListener('click', function () {
     setTimeout(function () {
       running = false;
       if (outcome === 'success') {
-        if (L.report) { showReport(L.report); }
-        else { finishLevel(); }
+        sfx.good();
+        if (L.report) showReport(L.report);
+        else finishLevel();
       } else {
-        mistakes++;
-        mistakesEl.textContent = 'Mistakes this level: ' + mistakes;
-        runBtn.disabled = false;
+        loseHeart();
+        if (hearts > 0) runBtn.disabled = false;
       }
     }, wait);
-  }, 800);
+  }, 900);
 });
 
 /* ================= CONFIDENCE REPORT ================= */
@@ -487,6 +708,7 @@ function showReport(report) {
       if (levelDone) return;
       if (s.false) {
         b.classList.add('right-pick');
+        sfx.ding();
         reportMsg.textContent = '✅ Correct! That was the hallucination — Bloop made it up. Always verify.';
         reportMsg.className = 'report-msg good';
         levelDone = true;
@@ -495,8 +717,7 @@ function showReport(report) {
         b.classList.add('wrong-pick');
         reportMsg.textContent = '❌ Nope — that one is actually true. Look again.';
         reportMsg.className = 'report-msg bad';
-        mistakes++;
-        mistakesEl.textContent = 'Mistakes this level: ' + mistakes;
+        loseHeart();
         setTimeout(function () { b.classList.remove('wrong-pick'); }, 900);
       }
     });
@@ -508,68 +729,92 @@ function showReport(report) {
 /* ================= COMPLETION ================= */
 function finishLevel() {
   levelDone = true;
+  stopTimer();
   var stars = mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1;
-  var points = stars * 100;
-  starsEarned[levelIdx] = stars;
+  var timeBonus = Math.max(0, Math.min(50, 60 - elapsed));
+  var points = stars * 100 + timeBonus;
   totalStars += stars;
   totalScore += points;
   updateChips();
-  $('complete-title').textContent = levelIdx === LEVELS.length - 1 ? 'All levels cleared!' : 'Level cleared!';
+  confettiBurst();
+  $('complete-title').textContent = levelIdx === LEVELS.length - 1 ? 'All missions cleared!' : 'Mission cleared!';
   $('complete-stars').innerHTML = starsHtml(stars);
-  $('complete-text').innerHTML = 'You earned <b>' + points + ' points</b> (' + mistakes + ' mistake' + (mistakes === 1 ? '' : 's') + ' this level).';
-  $('next-btn').textContent = levelIdx === LEVELS.length - 1 ? 'See your results →' : 'Next level →';
-  completeCard.classList.add('show');
+  $('complete-text').innerHTML = 'You earned <b>' + points + ' points</b> (' + stars * 100 + ' for stars + ' + timeBonus + ' speed bonus) with ' + mistakes + ' mistake' + (mistakes === 1 ? '' : 's') + ' in ' + fmtTime(elapsed) + '.';
+  $('next-btn').textContent = levelIdx === LEVELS.length - 1 ? 'See your results →' : 'Next mission →';
+  $('complete-overlay').classList.add('show');
   runBtn.disabled = true;
-  completeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
-
 $('next-btn').addEventListener('click', function () {
+  sfx.click();
+  $('complete-overlay').classList.remove('show');
   if (levelIdx === LEVELS.length - 1) { showVictory(); return; }
   levelIdx++;
-  loadLevel();
+  loadLevel(true);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+$('retry-btn').addEventListener('click', function () {
+  sfx.click();
+  $('hearts-overlay').classList.remove('show');
+  loadLevel(false);
+  startTimer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 function showVictory() {
-  completeCard.classList.remove('show');
   $('victory-stars').innerHTML = starsHtml(Math.round(totalStars / 3));
-  $('victory-text').innerHTML = 'You finished with <b>' + totalScore + ' / 900 points</b> and <b>' + totalStars + ' / 9 stars</b>. Bloop is officially wrangled.';
+  $('victory-text').innerHTML = 'You finished with <b>' + totalScore + ' / 1050 points</b> and <b>' + totalStars + ' / 9 stars</b>. Bloop is officially wrangled.';
   var live = 'https://syedyousafraza.github.io/literal-genie-ai-wrangler/';
-  $('share-text').value = 'I scored ' + totalScore + '/900 taming a literal AI in "Literal Genie: AI Wrangler" — a game that teaches how AI really works. Try it: ' + live;
-  victoryCard.classList.add('show');
+  $('share-text').value = 'I scored ' + totalScore + '/1050 taming a literal AI in "Literal Genie: AI Wrangler" — a game that teaches how AI really works. Try it: ' + live;
+  $('victory-overlay').classList.add('show');
   setExpression('happy');
-  victoryCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  confettiBurst();
+  setTimeout(confettiBurst, 500);
 }
-
 $('again-btn').addEventListener('click', function () {
-  levelIdx = 0; totalScore = 0; totalStars = 0; starsEarned = [0, 0, 0];
+  sfx.click();
+  $('victory-overlay').classList.remove('show');
+  levelIdx = 0; totalScore = 0; totalStars = 0;
   updateChips();
-  loadLevel();
+  loadLevel(true);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
-
 $('copy-btn').addEventListener('click', function () {
   var input = $('share-text');
   input.select();
-  try { document.execCommand('copy'); } catch (e) { /* clipboard API fallback */ }
+  try { document.execCommand('copy'); } catch (e) { /* ignore */ }
   if (navigator.clipboard) navigator.clipboard.writeText(input.value).catch(function () {});
   $('copy-btn').textContent = 'Copied ✓';
   setTimeout(function () { $('copy-btn').textContent = 'Copy'; }, 1500);
 });
 
-/* ================= HINT / RESET ================= */
+/* ================= HINT / RESET / TYPE MODE ================= */
 hintBtn.addEventListener('click', function () {
+  sfx.click();
   hintBox.innerHTML = '<b>💡 Hint:</b> ' + LEVELS[levelIdx].hint;
   hintBox.classList.add('show');
 });
 resetBtn.addEventListener('click', function () {
-  promptEl.value = LEVELS[levelIdx].defaultPrompt;
-  promptEl.focus();
+  sfx.click();
+  selected = LEVELS[levelIdx].baseChips.slice();
+  $('prompt').value = '';
+  renderPromptBar(); renderTray();
+});
+typeBtn.addEventListener('click', function () {
+  sfx.click();
+  typeMode = !typeMode;
+  $('type-box').classList.toggle('show', typeMode);
+  typeBtn.textContent = typeMode ? '🧩 Back to cards' : '✏️ Type it yourself';
+  if (typeMode) {
+    $('prompt').value = currentPrompt();
+    $('prompt').focus();
+  } else {
+    $('prompt').value = '';
+  }
 });
 
 /* ================= INIT ================= */
 updateChips();
-loadLevel();
+loadLevel(true);
 </script>
 </body>
 </html>
