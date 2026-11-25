@@ -43,6 +43,7 @@ Bloop, mid-game on a hallucination challenge:
 ## Features
 
 - **100 verified challenges** — every question machine-checked (answer in range, no duplicates, correct answers spread across all positions so you can't guess by position)
+- **Wrong answers are close calls** — each one is a real prompting mistake (vague, missing one ingredient, fixing the wrong thing). Hallucination checks hide in small detail changes: one week vs two weeks, $49 vs $79, a real section number with a fake claim attached.
 - **A "Why" lesson after every question** — the learning payload, in plain words
 - **Endless random play** — shuffled order, bank reshuffles when complete
 - **Hearts, streaks and a 30-second timer** — 3 hearts, streak bonuses, speed bonuses, confetti on streaks and new best scores
