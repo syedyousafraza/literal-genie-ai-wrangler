@@ -3,145 +3,93 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Literal Genie: AI Wrangler — Learn AI by taming a literal robot</title>
-<meta name="description" content="A puzzle game about AI: guide Bloop, an overly literal robot, through everyday tasks. Build clear prompts, catch hallucinations, and learn how AI really works.">
+<title>Literal Genie: AI Wrangler — Master the art of prompting</title>
+<meta name="description" content="100 real-world prompt challenges. Pick the best prompt, spot the hallucination, fix the follow-up — and learn the art of prompting while you play.">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: linear-gradient(180deg, #fdf6ec, #f7f5f0 240px); color: #3d3a35; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; line-height: 1.5; min-height: 100vh; }
-  .wrap { width: min(94vw, 880px); margin: 0 auto; padding: 16px 0 48px; }
+  .wrap { width: min(94vw, 860px); margin: 0 auto; padding: 16px 0 48px; }
 
-  /* ---------- top bar ---------- */
   header.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  h1 { font-size: 30px; line-height: 1.1; color: #2d2a26; }
+  h1 { font-size: 28px; line-height: 1.1; color: #2d2a26; }
   h1 .genie { color: #6c5ce7; }
   .hud { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .chip { background: #fff; border: 1px solid #e5e0d8; border-radius: 999px; padding: 7px 13px; font-weight: 800; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,.07); white-space: nowrap; }
   .chip span { color: #6c5ce7; }
   .hearts { font-size: 19px; letter-spacing: 2px; }
   .hearts .lost { opacity: .25; filter: grayscale(1); }
+  .streak-fire { color: #e17055; }
   .icon-btn { background: #fff; border: 1px solid #e5e0d8; border-radius: 999px; width: 38px; height: 38px; font-size: 18px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,.07); }
   .tagline { color: #7a756c; font-size: 14px; margin-top: 4px; }
 
-  /* ---------- mission map ---------- */
-  .map { display: flex; align-items: center; gap: 0; margin: 16px 0 4px; }
-  .node { flex: 1; text-align: center; position: relative; padding-top: 30px; font-size: 12px; font-weight: 800; color: #9a948a; }
-  .node::before { content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #e5e0d8; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); z-index: 1; }
-  .node::after { content: ""; position: absolute; top: 18px; left: -50%; width: 100%; height: 4px; background: #e5e0d8; z-index: 0; }
-  .node:first-child::after { display: none; }
-  .node.now { color: #6c5ce7; }
-  .node.now::before { background: #6c5ce7; animation: pulse 1.4s ease-in-out infinite; }
-  .node.done { color: #00b894; }
-  .node.done::before { background: #00b894; content: "✓"; color: #fff; font-size: 13px; line-height: 20px; text-align: center; }
-  .node.done::after { background: #00b894; }
-  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(108,92,231,.45); } 50% { box-shadow: 0 0 0 8px rgba(108,92,231,0); } }
+  .timer-wrap { height: 10px; background: #e5e0d8; border-radius: 99px; overflow: hidden; margin: 16px 0 4px; }
+  .timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #00b894, #00cf9e); border-radius: 99px; transition: width .2s linear; }
+  .timer-bar.low { background: linear-gradient(90deg, #e17055, #d63031); }
+  .q-meta { display: flex; gap: 8px; align-items: center; font-size: 13px; color: #7a756c; margin-bottom: 12px; flex-wrap: wrap; }
+  .cat-tag { background: #6c5ce7; color: #fff; border-radius: 999px; padding: 3px 11px; font-weight: 800; font-size: 12px; }
+  .type-tag { background: #fff; border: 1px solid #e5e0d8; border-radius: 999px; padding: 3px 11px; font-weight: 800; font-size: 12px; color: #5b564d; }
 
   .card { background: #fff; border: 1px solid #e9e4db; border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 3px 12px rgba(0,0,0,.05); }
   .card h2 { font-size: 19px; margin-bottom: 6px; }
-  .objective { font-size: 17px; }
-  .objective b { color: #6c5ce7; }
 
-  /* ---------- stage ---------- */
-  .stage { position: relative; overflow: hidden; padding: 0; }
-  .stage-inner { display: flex; gap: 14px; align-items: flex-end; padding: 18px; }
-  .stage-kitchen { background: linear-gradient(180deg, #ffe9c9, #fff6e6); }
-  .stage-room { background: linear-gradient(180deg, #dfeeff, #eef6ff); }
-  .stage-airport { background: linear-gradient(180deg, #d9f2ff, #eaf9ff); }
-  .bloop-box { flex: 0 0 150px; text-align: center; position: relative; z-index: 2; transition: transform .7s ease-in-out; }
-  .bloop-box.walk { transform: translateX(70px); }
-  .bloop-box svg { animation: bob 3s ease-in-out infinite; filter: drop-shadow(0 4px 6px rgba(0,0,0,.18)); }
-  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  /* Bloop strip */
+  .bloop-strip { display: flex; gap: 14px; align-items: center; padding: 12px 16px; }
+  .bloop-strip svg { flex: 0 0 auto; animation: bob 3s ease-in-out infinite; filter: drop-shadow(0 3px 5px rgba(0,0,0,.15)); }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   .antenna-ball { animation: blink 1.6s ease-in-out infinite; }
   @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-  .bloop-name { font-weight: 800; font-size: 14px; }
-  .bloop-mood { font-size: 12px; color: #7a756c; }
-  .scene-wrap { flex: 1; min-width: 240px; }
-  .bubble { position: relative; background: #fff; border: 2px solid #e5e0d8; border-radius: 14px; padding: 10px 14px; font-size: 15px; font-style: italic; color: #4a4480; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
-  .bubble::before { content: ""; position: absolute; left: -9px; bottom: 16px; width: 14px; height: 14px; background: #fff; border-left: 2px solid #e5e0d8; border-bottom: 2px solid #e5e0d8; transform: rotate(45deg); }
-  .scene { margin-top: 12px; background: rgba(255,255,255,.65); border: 1px solid rgba(255,255,255,.9); border-radius: 14px; min-height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px; text-align: center; }
-  .scene .actors { font-size: 50px; letter-spacing: 5px; line-height: 1.15; }
-  .scene .caption { font-size: 15px; font-weight: 700; color: #5b564d; }
-  .scene .fly { display: inline-block; animation: flyout 1.1s ease-in forwards; }
-  @keyframes flyout { to { transform: translate(130px, -90px) rotate(40deg); opacity: 0; } }
-  .scene .shake { display: inline-block; animation: shake .5s ease; }
-  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-  .scene .floaty { display: inline-block; animation: floaty 2.6s ease-in-out infinite; }
-  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-  .stage.shake-all { animation: shake .45s ease; }
+  .bubble { flex: 1; position: relative; background: #f1eefc; border: 1px solid #ddd6f5; border-radius: 12px; padding: 11px 14px; font-size: 15px; font-style: italic; color: #4a4480; }
+  .bubble::before { content: ""; position: absolute; left: -8px; top: 50%; margin-top: -7px; width: 13px; height: 13px; background: #f1eefc; border-left: 1px solid #ddd6f5; border-bottom: 1px solid #ddd6f5; transform: rotate(45deg); }
 
-  /* ---------- prompt builder ---------- */
-  .prompt-bar { background: #fbf9ff; border: 2px dashed #c9bff5; border-radius: 12px; min-height: 56px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .prompt-bar .empty-hint { color: #9a948a; font-size: 14px; font-style: italic; }
-  .chip-pick { background: #6c5ce7; color: #fff; border-radius: 999px; padding: 8px 12px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; animation: pop-in .18s ease; box-shadow: 0 2px 5px rgba(108,92,231,.35); }
-  .chip-pick:hover { background: #5a4bd1; }
-  .chip-pick::after { content: " ×"; opacity: .75; }
-  @keyframes pop-in { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  .tray-label { font-size: 13px; font-weight: 800; color: #7a756c; text-transform: uppercase; letter-spacing: 1px; margin: 14px 0 8px; }
-  .tray { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip-add { background: #fff; border: 2px solid #ddd6f5; color: #4a4480; border-radius: 999px; padding: 9px 14px; font-weight: 700; font-size: 14px; cursor: pointer; transition: transform .08s ease, background .15s; }
-  .chip-add:hover { background: #f1eefc; transform: translateY(-2px); }
-  .chip-add:active { transform: scale(.94); }
-  .chip-add.used { opacity: .35; pointer-events: none; }
-  .chip-add.trap { border-style: dashed; }
-  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+  .scenario { font-size: 17px; margin-bottom: 10px; }
+  .scenario b { color: #6c5ce7; }
+  .context { background: #fbf9ff; border: 1px solid #e5defa; border-left: 4px solid #6c5ce7; border-radius: 10px; padding: 12px 14px; font-size: 15px; margin-bottom: 6px; white-space: pre-wrap; }
+  .context .ctx-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #6c5ce7; display: block; margin-bottom: 4px; }
+  .q-instruction { font-size: 16px; font-weight: 800; margin: 14px 0 10px; }
+
+  .opt { display: block; width: 100%; text-align: left; background: #fff; border: 2px solid #ddd6f5; color: #2d2a26; border-radius: 12px; padding: 13px 16px; margin-bottom: 10px; font-weight: 600; font-size: 15px; cursor: pointer; transition: transform .08s ease, border-color .15s, background .15s; line-height: 1.45; }
+  .opt:hover:not(:disabled) { border-color: #6c5ce7; transform: translateY(-2px); background: #fbf9ff; }
+  .opt:active:not(:disabled) { transform: scale(.98); }
+  .opt:disabled { cursor: default; }
+  .opt.correct { border-color: #00b894; background: #e6f9f3; }
+  .opt.wrong { border-color: #e17055; background: #fdecea; animation: shake .4s ease; }
+  .opt.dim { opacity: .55; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .why-box { display: none; background: #fff8e1; border: 1px solid #ffe082; border-radius: 12px; padding: 14px 16px; margin-top: 6px; font-size: 15px; animation: fadein .3s ease; }
+  .why-box.show { display: block; }
+  .why-box b { color: #8d6e00; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .next-row { display: none; margin-top: 14px; text-align: right; }
+  .next-row.show { display: block; }
   button { font: inherit; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; padding: 12px 20px; font-size: 16px; transition: transform .08s ease; }
   button:active { transform: scale(.96); }
-  .btn-run { background: linear-gradient(180deg, #7d6ff0, #6c5ce7); color: #fff; font-size: 18px; padding: 13px 26px; box-shadow: 0 4px 12px rgba(108,92,231,.4); }
-  .btn-run:hover { filter: brightness(1.06); }
-  .btn-run:disabled { opacity: .5; cursor: default; box-shadow: none; }
-  .btn-ghost { background: #efeae2; color: #5b564d; padding: 11px 16px; font-size: 14px; }
-  .btn-ghost:hover { background: #e5ded2; }
   .btn-next { background: linear-gradient(180deg, #00cf9e, #00b894); color: #fff; box-shadow: 0 4px 12px rgba(0,184,148,.35); }
-  .mistakes { font-size: 13px; color: #7a756c; margin-left: auto; }
-  .hint-box { display: none; margin-top: 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 11px 14px; font-size: 14px; }
-  .hint-box.show { display: block; }
-  .hint-box b { color: #8d6e00; }
-  .type-box { display: none; margin-top: 4px; }
-  .type-box.show { display: block; }
-  textarea { width: 100%; min-height: 64px; border: 2px solid #ddd6f5; border-radius: 10px; padding: 12px 14px; font: inherit; font-size: 16px; resize: vertical; background: #fbf9ff; color: #2d2a26; }
-  textarea:focus { outline: none; border-color: #6c5ce7; }
+  .btn-run { background: linear-gradient(180deg, #7d6ff0, #6c5ce7); color: #fff; font-size: 18px; padding: 13px 26px; box-shadow: 0 4px 12px rgba(108,92,231,.4); }
+  .btn-ghost { background: #efeae2; color: #5b564d; padding: 11px 16px; font-size: 14px; }
 
-  /* ---------- log (Bloop radio) ---------- */
-  .log { font-size: 15px; }
-  .log-line { padding: 8px 4px; border-bottom: 1px dashed #eee9df; animation: fadein .3s ease; }
-  .log-line:last-child { border-bottom: none; }
-  .log-empty { color: #9a948a; font-style: italic; }
-  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-
-  /* ---------- report ---------- */
-  .report { display: none; border: 2px solid #6c5ce7; }
-  .report.show { display: block; animation: fadein .3s ease; }
-  .report h2 { color: #6c5ce7; }
-  .report p { font-size: 15px; margin-bottom: 12px; }
-  .stmt { display: block; width: 100%; text-align: left; background: #fbf9ff; border: 2px solid #ddd6f5; color: #2d2a26; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; font-weight: 700; font-size: 16px; cursor: pointer; transition: transform .08s ease; }
-  .stmt:hover { border-color: #6c5ce7; transform: translateY(-2px); }
-  .stmt.wrong-pick { border-color: #e17055; background: #fdecea; animation: shake .4s ease; }
-  .stmt.right-pick { border-color: #00b894; background: #e6f9f3; }
-  .report-msg { font-size: 15px; font-weight: 700; min-height: 24px; margin-top: 4px; }
-  .report-msg.bad { color: #d63031; }
-  .report-msg.good { color: #00b894; }
-
-  /* ---------- overlays ---------- */
   .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(45,42,38,.55); display: none; align-items: center; justify-content: center; padding: 20px; }
   .overlay.show { display: flex; }
-  .modal { background: #fff; border-radius: 18px; padding: 26px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.3); animation: pop-in .25s ease; }
+  .modal { background: #fff; border-radius: 18px; padding: 26px; max-width: 520px; width: 100%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.3); animation: pop-in .25s ease; }
+  @keyframes pop-in { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .modal h2 { font-size: 26px; margin-bottom: 8px; }
-  .modal p { font-size: 16px; margin-bottom: 16px; color: #5b564d; }
+  .modal p { font-size: 16px; margin-bottom: 12px; color: #5b564d; }
   .modal .big { font-size: 52px; }
-  .stars { font-size: 42px; letter-spacing: 6px; color: #f5b301; margin: 4px 0; text-shadow: 0 2px 0 rgba(0,0,0,.08); }
+  .modal .howto { text-align: left; max-width: 420px; margin: 0 auto 16px; font-size: 15px; }
+  .modal .howto li { margin-bottom: 6px; }
+  .stars { font-size: 42px; letter-spacing: 6px; color: #f5b301; margin: 4px 0; }
   .stars .off { color: #ddd6d0; }
-  #confetti-canvas { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
-  .victory-list { text-align: left; max-width: 520px; margin: 0 auto 14px; font-size: 15px; }
-  .victory-list li { margin-bottom: 6px; }
+  .stat-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .stat { background: #f7f5f0; border-radius: 10px; padding: 10px 16px; font-size: 14px; }
+  .stat b { display: block; font-size: 22px; color: #6c5ce7; }
   .share-box { display: flex; gap: 8px; max-width: 640px; margin: 0 auto 12px; }
   .share-box input { flex: 1; border: 2px solid #ddd6f5; border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 13px; background: #fbf9ff; min-width: 0; }
+  #confetti-canvas { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
   footer { text-align: center; color: #9a948a; font-size: 13px; margin-top: 8px; }
   footer a { color: #6c5ce7; }
   @media (max-width: 560px) {
     h1 { font-size: 24px; }
-    .stage-inner { flex-direction: column; align-items: center; }
-    .bloop-box { flex-basis: auto; }
-    .bubble::before { display: none; }
-    .scene .actors { font-size: 40px; }
+    .bloop-strip svg { width: 84px; height: 88px; }
   }
 </style>
 </head>
@@ -151,245 +99,91 @@
   <header class="top">
     <div>
       <h1>🧞 Literal Genie: <span class="genie">AI Wrangler</span></h1>
-      <p class="tagline">Bloop follows your words <b>exactly</b> — including the parts you forgot. Build the perfect prompt, then check its work.</p>
+      <p class="tagline">100 real prompt challenges. Pick the best prompt, spot the hallucination, and master the art of prompting.</p>
     </div>
     <div class="hud">
       <div class="chip hearts" id="hearts">❤️❤️❤️</div>
-      <div class="chip">⭐ <span id="chip-stars">0/9</span></div>
+      <div class="chip">🔥 <span id="chip-streak">0</span></div>
       <div class="chip">🏆 <span id="chip-score">0</span></div>
-      <div class="chip">⏱️ <span id="chip-time">0:00</span></div>
       <button class="icon-btn" id="mute-btn" title="Sound on/off">🔊</button>
     </div>
   </header>
 
-  <div class="map" id="map"></div>
-
-  <div class="card stage stage-kitchen" id="stage">
-    <div class="stage-inner">
-      <div class="bloop-box" id="bloop-box">
-        <svg id="bloop-svg" viewBox="0 0 200 210" width="140" height="148" aria-label="Bloop the robot">
-          <line x1="100" y1="20" x2="100" y2="44" stroke="#8f7a66" stroke-width="5" stroke-linecap="round"/>
-          <circle class="antenna-ball" cx="100" cy="15" r="9" fill="#e17055"/>
-          <rect x="20" y="88" width="12" height="26" rx="6" fill="#00b8a9"/>
-          <rect x="168" y="88" width="12" height="26" rx="6" fill="#00b8a9"/>
-          <rect x="32" y="44" width="136" height="120" rx="28" fill="#7ed6cf" stroke="#00a99d" stroke-width="3"/>
-          <rect x="46" y="58" width="108" height="92" rx="18" fill="#eafaf8"/>
-          <g id="bloop-eyebrows"></g>
-          <g id="bloop-eyes"></g>
-          <g id="bloop-mouth"></g>
-          <rect x="68" y="164" width="64" height="34" rx="12" fill="#00b8a9"/>
-          <circle cx="100" cy="181" r="7" fill="#f9f6f2"/>
-        </svg>
-        <div class="bloop-name">BLOOP 🤖</div>
-        <div class="bloop-mood" id="bloop-mood">Literal Robot · Genie v1.0</div>
-      </div>
-      <div class="scene-wrap">
-        <div class="bubble" id="bubble">I'm Bloop. I do EXACTLY what you say. Exactly.</div>
-        <div class="scene" id="scene" style="margin-top:12px"></div>
-      </div>
-    </div>
+  <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+  <div class="q-meta">
+    <span class="cat-tag" id="cat-tag">Work</span>
+    <span class="type-tag" id="type-tag">Pick the best prompt</span>
+    <span id="q-count">Question 1</span>
+    <span style="margin-left:auto" id="q-bank">Bank: 100 challenges</span>
   </div>
 
-  <div class="card">
-    <h2 id="level-title"></h2>
-    <p class="objective">🎯 Mission: <b id="objective"></b></p>
+  <div class="card bloop-strip">
+    <svg id="bloop-svg" viewBox="0 0 200 210" width="104" height="110" aria-label="Bloop the robot">
+      <line x1="100" y1="20" x2="100" y2="44" stroke="#8f7a66" stroke-width="5" stroke-linecap="round"/>
+      <circle class="antenna-ball" cx="100" cy="15" r="9" fill="#e17055"/>
+      <rect x="20" y="88" width="12" height="26" rx="6" fill="#00b8a9"/>
+      <rect x="168" y="88" width="12" height="26" rx="6" fill="#00b8a9"/>
+      <rect x="32" y="44" width="136" height="120" rx="28" fill="#7ed6cf" stroke="#00a99d" stroke-width="3"/>
+      <rect x="46" y="58" width="108" height="92" rx="18" fill="#eafaf8"/>
+      <g id="bloop-eyebrows"></g>
+      <g id="bloop-eyes"></g>
+      <g id="bloop-mouth"></g>
+      <rect x="68" y="164" width="64" height="34" rx="12" fill="#00b8a9"/>
+      <circle cx="100" cy="181" r="7" fill="#f9f6f2"/>
+    </svg>
+    <div class="bubble" id="bubble">I'm Bloop. I do EXACTLY what you say. Let's see if you can prompt me properly…</div>
   </div>
 
-  <div class="card">
-    <h2>🧩 Build Bloop's orders</h2>
-    <p style="font-size:14px;color:#7a756c;margin-bottom:10px">Tap cards to add them to the prompt. Tap a card in the prompt to remove it. Then press RUN and watch Bloop obey… literally.</p>
-    <div class="prompt-bar" id="prompt-bar"><span class="empty-hint">Your prompt will appear here — tap some cards below 👇</span></div>
-    <div class="tray-label">📥 Instruction cards</div>
-    <div class="tray" id="tray"></div>
-    <div class="type-box" id="type-box">
-      <textarea id="prompt" rows="2" spellcheck="false" placeholder="Or type your own prompt here…"></textarea>
-    </div>
-    <div class="btn-row">
-      <button class="btn-run" id="run-btn">▶ RUN</button>
-      <button class="btn-ghost" id="hint-btn">💡 Hint</button>
-      <button class="btn-ghost" id="type-btn">✏️ Type it yourself</button>
-      <button class="btn-ghost" id="reset-btn">↺ Reset</button>
-      <span class="mistakes" id="mistakes">Mistakes: 0</span>
-    </div>
-    <div class="hint-box" id="hint-box"></div>
+  <div class="card" id="question-card">
+    <p class="scenario" id="scenario"></p>
+    <div id="contexts"></div>
+    <p class="q-instruction" id="q-instruction"></p>
+    <div id="options"></div>
+    <div class="why-box" id="why-box"></div>
+    <div class="next-row" id="next-row"><button class="btn-next" id="next-btn">Next question →</button></div>
   </div>
 
-  <div class="card">
-    <h2>📻 Bloop's radio</h2>
-    <div class="log" id="log"><div class="log-line log-empty">Nothing yet. Build a prompt and press RUN — Bloop is waiting… literally.</div></div>
-  </div>
-
-  <div class="card report" id="report-card">
-    <h2>🕵️ Fact-check! Tap the lie.</h2>
-    <p>Bloop swears all of these are true. <b>One is a hallucination</b> — a confident fake fact. Tap the false one to pass. Wrong tap costs a ❤️.</p>
-    <div id="statements"></div>
-    <div class="report-msg" id="report-msg"></div>
-  </div>
+  <footer>Built with plain HTML, CSS &amp; JavaScript — no tracking, no ads, works offline. <a href="https://github.com/syedyousafraza/literal-genie-ai-wrangler">Source on GitHub</a></footer>
 </div>
 
-<div class="overlay" id="mission-overlay">
+<div class="overlay show" id="start-overlay">
   <div class="modal">
-    <div class="big" id="mission-emoji">🥪</div>
-    <h2 id="mission-title"></h2>
-    <p id="mission-text"></p>
-    <button class="btn-run" id="mission-start">▶ Start mission</button>
+    <div class="big">🧞</div>
+    <h2>Literal Genie: AI Wrangler</h2>
+    <p>Master the art of prompting — one real challenge at a time. <b>100 questions</b>, random order, endless play.</p>
+    <ul class="howto">
+      <li>🎯 <b>Pick the best prompt</b> — the one a pro would actually send to an AI.</li>
+      <li>🧩 <b>Spot what's missing</b> — the one ingredient that fixes a weak prompt.</li>
+      <li>🕵️ <b>Flag the hallucination</b> — AI lies confidently. Catch it.</li>
+      <li>🔧 <b>Fix the follow-up</b> — the AI messed up. What do you say next?</li>
+      <li>❤️ 3 hearts. ⏱️ 30 seconds per question. 🔥 Streaks earn bonus points.</li>
+    </ul>
+    <button class="btn-run" id="start-btn">▶ Start playing</button>
+    <p style="margin-top:12px;font-size:14px" id="best-line"></p>
   </div>
 </div>
 
-<div class="overlay" id="complete-overlay">
-  <div class="modal">
-    <div class="big">🎉</div>
-    <h2 id="complete-title">Mission cleared!</h2>
-    <div class="stars" id="complete-stars"></div>
-    <p id="complete-text"></p>
-    <button class="btn-next" id="next-btn">Next mission →</button>
-  </div>
-</div>
-
-<div class="overlay" id="hearts-overlay">
+<div class="overlay" id="over-overlay">
   <div class="modal">
     <div class="big">💔</div>
     <h2>Out of hearts!</h2>
-    <p>Bloop broke everything. Take a breath, read the hint, and try the mission again.</p>
-    <button class="btn-run" id="retry-btn">↺ Retry mission</button>
-  </div>
-</div>
-
-<div class="overlay" id="victory-overlay">
-  <div class="modal">
-    <div class="big">🏆</div>
-    <h2>Certified AI Wrangler!</h2>
-    <div class="stars" id="victory-stars"></div>
-    <p id="victory-text"></p>
-    <ul class="victory-list">
-      <li>📌 <b>Be specific.</b> AI can't read your mind — say the allergy, the number, the date.</li>
-      <li>📌 <b>Name the edge cases.</b> "Everything" includes the sofa. List what to keep.</li>
-      <li>📌 <b>Always verify.</b> A confident AI can still hallucinate. Check before you trust.</li>
-    </ul>
+    <div class="stat-row">
+      <div class="stat"><b id="final-score">0</b>score</div>
+      <div class="stat"><b id="final-answered">0</b>answered</div>
+      <div class="stat"><b id="final-correct">0</b>correct</div>
+      <div class="stat"><b id="final-best">0</b>best streak</div>
+    </div>
+    <p id="over-line"></p>
     <div class="share-box">
       <input id="share-text" readonly value="">
       <button class="btn-ghost" id="copy-btn">Copy</button>
     </div>
-    <button class="btn-next" id="again-btn">↺ Play again</button>
+    <button class="btn-run" id="again-btn">↺ Play again</button>
   </div>
 </div>
 
-<footer style="text-align:center;color:#9a948a;font-size:13px;padding-bottom:24px">Built with plain HTML, CSS &amp; JavaScript — no tracking, no ads, works offline. <a href="https://github.com/syedyousafraza/literal-genie-ai-wrangler" style="color:#6c5ce7">Source on GitHub</a></footer>
-
 <script>
 'use strict';
-/* ================= LEVELS ================= */
-var LEVELS = [
-  {
-    title: 'Mission 1 · The Allergic Lunch', emoji: '🥪', stageClass: 'stage-kitchen',
-    objective: 'Serve a safe lunch to Alex, who is allergic to peanuts.',
-    missionText: 'Alex is hungry — and allergic to peanuts. Bloop only knows what you tell it. Build a prompt that keeps lunch safe!',
-    hint: 'Bloop has no idea Alex is allergic unless you say so. Add the allergy — and a safe food to use instead.',
-    baseChips: ['Make a sandwich', 'for Alex', 'the most popular'],
-    trayChips: [
-      { t: 'no peanuts' }, { t: 'Alex is allergic to peanuts' }, { t: 'with cheese' },
-      { t: 'with turkey' }, { t: 'grilled cheese' }, { t: 'with peanut butter', trap: true }
-    ],
-    checks: [
-      { key: 'allergy', test: function (p) { return /no peanut|without peanut|peanut-?free|avoid peanut|peanut allergy|allergic to peanut|nut-?free/i.test(p); } },
-      { key: 'food', test: function (p) { return /cheese|turkey|chicken|ham|tuna|egg|veggie|vegetable|cucumber|tomato|lettuce|jam|grilled cheese|hummus/i.test(p); } }
-    ],
-    scenes: {
-      initial: { actors: '🍞 🧀 🥛 &nbsp; 🧑 &nbsp; 🍽️', caption: 'Alex is hungry. The kitchen is ready.' },
-      failAllergy: { actors: '🥜 🥪 &nbsp; 😟', caption: 'Bloop served the most popular sandwich: PB&J!' },
-      failFood: { actors: '🍞 🍞 &nbsp; 😐', caption: 'Two slices of plain bread. That is the sandwich.' },
-      success: { actors: '🥪 🧀 &nbsp; 😋', caption: 'A grilled cheese sandwich — zero peanuts, all delicious.' }
-    },
-    outcomes: {
-      failAllergy: { mood: 'smug', bubble: 'I did exactly what you asked. Popular = peanut butter. Obviously.',
-        log: ['🤖 Bloop searched for "the most popular sandwich".', '🥜 Result: peanut butter &amp; jelly. A classic!', '⚠️ WAIT — Alex is allergic to peanuts. This lunch is dangerous.', '❌ Failed: the allergy was never mentioned.'] },
-      failFood: { mood: 'confused', bubble: 'No peanuts, got it. But… what do I put IN it?',
-        log: ['🤖 Bloop heard "no peanuts". Good.', '🍞 But no safe filling was named…', '🥪 Result: two slices of plain bread. Technically a sandwich.', '❌ Failed: name a safe food for Bloop to use.'] },
-      success: { mood: 'happy', bubble: 'Oh! You meant THAT kind of sandwich. Got it.',
-        log: ['✅ Allergy check: peanuts are dangerous for Alex — excluded.', '🧀 Filling chosen: grilled cheese. Peanut-free.', '🍽️ Lunch served. Alex eats safely.', '🎉 Mission cleared!'] }
-    },
-    report: null
-  },
-  {
-    title: 'Mission 2 · The Living Room', emoji: '🛋️', stageClass: 'stage-room',
-    objective: 'Clean the messy living room without breaking anything.',
-    missionText: 'The living room is a disaster zone. Bloop is ready to "help". Choose your words like the sofa depends on it — because it does.',
-    hint: '"Everything" is a dangerous word. Say exactly WHAT to remove — and what Bloop must never touch.',
-    baseChips: ['Remove', 'everything', 'on the floor'],
-    trayChips: [
-      { t: 'only trash' }, { t: 'dirty clothes' }, { t: 'keep the furniture' },
-      { t: 'keep the sofa and TV' }, { t: 'throw the sofa out', trap: true }, { t: 'as fast as possible' }
-    ],
-    checks: [
-      { key: 'scope', test: function (p) { return /trash|rubbish|garbage|dirty clothes|dirty laundry/i.test(p); } },
-      { key: 'keep', test: function (p) { return /(furniture|sofa|couch|tv|television)/i.test(p) && /(keep|leave|stay|don\'t|do not|except|untouched|safe|protect)/i.test(p); } }
-    ],
-    scenes: {
-      initial: { actors: '🛋️ 📺 🧦 👕 🗑️', caption: 'The living room is a mess.' },
-      failBoth: { actors: '<span class="fly">🛋️</span> 🪟 📺💥', caption: 'The sofa went out the window. The TV followed.' },
-      failKeep: { actors: '🗑️✅ <span class="fly">🛋️</span>', caption: 'Trash collected! …and so was the sofa.' },
-      failScope: { actors: '🛋️ 📺 <span class="shake">🤖</span>', caption: 'Bloop couldn\'t tell trash from treasure — it cleaned nothing.' },
-      success: { actors: '🛋️ 📺 ✨ 🗑️', caption: 'Tidy room. Furniture safe. Nothing broken.' }
-    },
-    outcomes: {
-      failBoth: { mood: 'smug', bubble: 'You said everything. EVERYTHING. I don\'t make the rules.',
-        log: ['🤖 Bloop heard: remove EVERYTHING on the floor.', '🛋️ The sofa was on the floor. Out the window it goes.', '📺 The TV was also on the floor. It is in the garden now.', '❌ Failed: "everything" includes furniture. Be specific!'] },
-      failKeep: { mood: 'confused', bubble: 'Trash is gone! The sofa… was also on the floor. My bad?',
-        log: ['✅ Trash and dirty clothes: collected.', '🛋️ But the sofa was never protected… out the window.', '❌ Failed: say what Bloop must KEEP.'] },
-      failScope: { mood: 'worried', bubble: 'I didn\'t know what counts as trash, so I did nothing. You\'re welcome?',
-        log: ['🤖 Bloop looked at the mess…', '❓ …but nothing said what counts as trash.', '🛋️ Bloop cleaned nothing rather than risk the sofa.', '❌ Failed: name exactly what to remove.'] },
-      success: { mood: 'happy', bubble: 'Trash out, sofa in. I can follow rules when you actually give me some.',
-        log: ['✅ Only trash and dirty clothes were removed.', '🛋️ Sofa, TV and furniture: untouched.', '✨ Room is clean — and still has furniture.', '🎉 Mission cleared!'] }
-    },
-    report: {
-      statements: [
-        { text: 'I bagged 2 bags of trash.', false: false },
-        { text: 'The sofa stayed in the living room.', false: false },
-        { text: 'The TV is now in the garden.', false: true }
-      ]
-    }
-  },
-  {
-    title: 'Mission 3 · The Flight', emoji: '✈️', stageClass: 'stage-airport',
-    objective: 'Book a budget flight under $300 for tomorrow.',
-    missionText: 'You need to fly TOMORROW, and you only have $300. Bloop found something "cheap" and "fast"… what could possibly go wrong?',
-    hint: '"Cheap" and "fast" are not numbers or dates. Give Bloop a price limit and a day.',
-    baseChips: ['Find a flight', 'cheap', 'fast'],
-    trayChips: [
-      { t: 'for tomorrow' }, { t: 'under $300' }, { t: 'next year', trap: true },
-      { t: 'first class', trap: true }, { t: 'the cheapest one' }
-    ],
-    checks: [
-      { key: 'date', test: function (p) { return /tomorrow|nov(ember)? 26|26 ?nov|2026-11-26/i.test(p); } },
-      { key: 'budget', test: function (p) { return /300/.test(p); } }
-    ],
-    scenes: {
-      initial: { actors: '<span class="floaty">✈️</span> 🧳 📅', caption: 'You need to fly tomorrow.' },
-      failBoth: { actors: '🎫 📅 <span class="shake">2027</span> 😴', caption: 'A $250 flight… leaving in 365 days.' },
-      failDate: { actors: '🎫 💰 📅 2027', caption: 'Under budget! Departing next year.' },
-      failBudget: { actors: '🎫 💎 $1,200 ✈️', caption: 'Tomorrow\'s flight — first class, $1,200. It was the fastest one.' },
-      success: { actors: '🎫 ✅ <span class="floaty">✈️</span> 📅', caption: '$250 flight, departing tomorrow at 08:00.' }
-    },
-    outcomes: {
-      failBoth: { mood: 'smug', bubble: 'Cheap? Fast? Done and done. You didn\'t say tomorrow. Or $300. Details, details.',
-        log: ['🤖 Bloop searched: cheapest flight, as fast as possible.', '💰 Found one: $250!', '📅 Departure: next year. You never said WHEN.', '❌ Failed: give Bloop a date AND a budget.'] },
-      failDate: { mood: 'confused', bubble: '$250, under budget! The date… you never mentioned a date.',
-        log: ['✅ Price: $250 — under budget.', '📅 But "tomorrow" was never mentioned… departure: next year.', '❌ Failed: Bloop needs the date.'] },
-      failBudget: { mood: 'worried', bubble: 'Tomorrow, yes! Price… "cheap" is not a number, so I picked first class.',
-        log: ['✅ Date: tomorrow. Correct!', '💰 But "cheap" was never a number… Bloop picked first class: $1,200.', '❌ Failed: Bloop needs a price limit.'] },
-      success: { mood: 'happy', bubble: 'Date, price, facts — all checked. See? I\'m very trainable.',
-        log: ['✅ Date filter: tomorrow only.', '💰 Price filter: under $300 — found $250.', '🎫 Booked. Departure: tomorrow, 08:00.', '🎉 Mission cleared!'] }
-    },
-    report: {
-      statements: [
-        { text: 'The flight costs $250.', false: false },
-        { text: 'The flight departs tomorrow.', false: false },
-        { text: 'The flight includes free teleportation to the airport.', false: true }
-      ]
-    }
-  }
-];
-
 /* ================= SOUNDS ================= */
 var audioCtx = null, muted = false;
 function tone(freq, dur, type, delay) {
@@ -407,7 +201,6 @@ function tone(freq, dur, type, delay) {
 }
 var sfx = {
   click: function () { tone(650, 0.07, 'triangle'); },
-  run: function () { tone(300, 0.15, 'sawtooth'); tone(500, 0.15, 'sawtooth', 0.12); },
   good: function () { tone(523, 0.14, 'sine'); tone(659, 0.14, 'sine', 0.12); tone(784, 0.22, 'sine', 0.24); },
   bad: function () { tone(180, 0.2, 'sawtooth'); tone(120, 0.3, 'sawtooth', 0.15); },
   ding: function () { tone(880, 0.18, 'sine'); tone(1174, 0.25, 'sine', 0.1); }
@@ -421,23 +214,15 @@ document.getElementById('mute-btn').addEventListener('click', function () {
 var confettiCanvas = document.getElementById('confetti-canvas');
 var confettiCtx = confettiCanvas.getContext('2d');
 var confettiParts = [], confettiRunning = false;
-function resizeConfetti() {
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-}
+function resizeConfetti() { confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
 window.addEventListener('resize', resizeConfetti);
 resizeConfetti();
-function confettiBurst() {
+function confettiBurst(n) {
   var colors = ['#6c5ce7', '#00b894', '#f5b301', '#e17055', '#00b8a9', '#fd79a8'];
-  for (var i = 0; i < 130; i++) {
-    confettiParts.push({
-      x: window.innerWidth / 2 + (Math.random() - 0.5) * 220,
-      y: window.innerHeight / 2 - 40,
-      vx: (Math.random() - 0.5) * 9, vy: -Math.random() * 9 - 3,
-      w: 6 + Math.random() * 7, h: 8 + Math.random() * 8,
-      color: colors[i % colors.length], rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
-      life: 1
-    });
+  for (var i = 0; i < (n || 90); i++) {
+    confettiParts.push({ x: window.innerWidth / 2 + (Math.random() - 0.5) * 220, y: window.innerHeight / 2 - 40,
+      vx: (Math.random() - 0.5) * 9, vy: -Math.random() * 9 - 3, w: 6 + Math.random() * 7, h: 8 + Math.random() * 8,
+      color: colors[i % colors.length], rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3, life: 1 });
   }
   if (!confettiRunning) { confettiRunning = true; requestAnimationFrame(confettiTick); }
 }
@@ -446,11 +231,9 @@ function confettiTick() {
   confettiParts = confettiParts.filter(function (p) { return p.life > 0 && p.y < confettiCanvas.height + 30; });
   confettiParts.forEach(function (p) {
     p.vy += 0.28; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 0.008;
-    confettiCtx.save();
-    confettiCtx.globalAlpha = Math.max(0, p.life);
+    confettiCtx.save(); confettiCtx.globalAlpha = Math.max(0, p.life);
     confettiCtx.translate(p.x, p.y); confettiCtx.rotate(p.rot);
-    confettiCtx.fillStyle = p.color;
-    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    confettiCtx.fillStyle = p.color; confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
     confettiCtx.restore();
   });
   if (confettiParts.length) requestAnimationFrame(confettiTick);
@@ -478,343 +261,312 @@ var MOUTHS = {
   happy: '<path d="M82 118 Q100 138 118 118" stroke="#2d3436" stroke-width="4" fill="none" stroke-linecap="round"/>',
   worried: '<circle cx="100" cy="126" r="6" fill="#2d3436"/>'
 };
-var MOODS = { neutral: 'Literal Robot · Genie v1.0', thinking: 'Thinking… literally.', confused: 'Confused', smug: 'Smug — it did what you said', happy: 'Happy — it finally gets it!', worried: 'Worried' };
 function setExpression(name) {
   document.getElementById('bloop-eyes').innerHTML = EYES[name] || EYES.neutral;
   document.getElementById('bloop-eyebrows').innerHTML = BROWS[name] || '';
   document.getElementById('bloop-mouth').innerHTML = MOUTHS[name] || MOUTHS.neutral;
-  document.getElementById('bloop-mood').textContent = MOODS[name] || MOODS.neutral;
 }
 
-/* ================= STATE ================= */
-var levelIdx = 0, mistakes = 0, hearts = 3, totalScore = 0, totalStars = 0;
-var running = false, levelDone = false, typeMode = false;
-var selected = [];          // chip texts currently in the prompt bar
-var levelStart = 0, timerId = null, elapsed = 0;
+/* ================= GAME ENGINE ================= */
+var TYPE_LABEL = { best: '🎯 Pick the best prompt', missing: '🧩 What\'s missing?', hall: '🕵️ Spot the hallucination', fix: '🔧 Fix the follow-up' };
+var BUBBLE_GOOD = ['Nice! That\'s exactly how a pro prompts.', 'Yes! Clear beats clever, every time.', 'You\'re getting good at this. Bloop is impressed.', 'That prompt would actually work. Well done!'];
+var BUBBLE_BAD = ['Nope. Bloop did exactly what THAT prompt says. Oops.', 'Ouch. See why the details matter?', 'Bloop followed your pick literally… and it went wrong.', 'That one had a hole in it. Read the why!'];
+var TIME_LIMIT = 30;
+
+var order = [], pos = -1, answered = 0, correctCount = 0, score = 0, hearts = 3, streak = 0, bestStreak = 0;
+var bestScore = 0, timerId = null, timeLeft = TIME_LIMIT, locked = false, currentQ = null;
+try { bestScore = parseInt(localStorage.getItem('genie-best-score') || '0', 10) || 0; } catch (e) { bestScore = 0; }
 
 var $ = function (id) { return document.getElementById(id); };
-var promptBar = $('prompt-bar'), trayEl = $('tray'), logEl = $('log'), sceneEl = $('scene'), bubbleEl = $('bubble');
-var runBtn = $('run-btn'), hintBtn = $('hint-btn'), resetBtn = $('reset-btn'), typeBtn = $('type-btn');
-var hintBox = $('hint-box'), mistakesEl = $('mistakes'), stageEl = $('stage');
-var reportCard = $('report-card'), statementsEl = $('statements'), reportMsg = $('report-msg');
-
-function starsHtml(n) {
-  var s = '';
-  for (var i = 0; i < 3; i++) s += '<span class="' + (i < n ? '' : 'off') + '">★</span>';
-  return s;
+function shuffle(a) {
+  for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
 }
-function updateChips() {
-  $('chip-stars').textContent = totalStars + '/9';
-  $('chip-score').textContent = totalScore;
+function updateHUD() {
   var h = '';
   for (var i = 0; i < 3; i++) h += '<span class="' + (i < hearts ? '' : 'lost') + '">❤️</span>';
   $('hearts').innerHTML = h;
+  $('chip-streak').textContent = streak;
+  $('chip-score').textContent = score;
 }
-function updateMap() {
-  var names = ['🥪 Lunch', '🛋️ Room', '✈️ Flight'];
-  var html = '';
-  for (var i = 0; i < LEVELS.length; i++) {
-    html += '<div class="node' + (i < levelIdx ? ' done' : i === levelIdx ? ' now' : '') + '">' + names[i] + '</div>';
-  }
-  $('map').innerHTML = html;
-}
-function fmtTime(s) {
-  var m = Math.floor(s / 60), sec = s % 60;
-  return m + ':' + (sec < 10 ? '0' : '') + sec;
+function updateTimerBar() {
+  var bar = $('timer-bar');
+  bar.style.width = (timeLeft / TIME_LIMIT * 100) + '%';
+  bar.classList.toggle('low', timeLeft <= 8);
 }
 function startTimer() {
   stopTimer();
-  elapsed = 0; levelStart = Date.now();
-  $('chip-time').textContent = '0:00';
+  timeLeft = TIME_LIMIT;
+  updateTimerBar();
   timerId = setInterval(function () {
-    elapsed = Math.floor((Date.now() - levelStart) / 1000);
-    $('chip-time').textContent = fmtTime(elapsed);
+    timeLeft--;
+    updateTimerBar();
+    if (timeLeft <= 0) { stopTimer(); onTimeout(); }
   }, 1000);
 }
 function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
 
-/* ================= PROMPT BUILDER ================= */
-function renderPromptBar() {
-  promptBar.innerHTML = '';
-  if (!selected.length) {
-    promptBar.innerHTML = '<span class="empty-hint">Your prompt will appear here — tap some cards below 👇</span>';
-    return;
+function nextQuestion() {
+  pos++;
+  if (pos >= order.length) {
+    order = shuffle(QUESTIONS.map(function (_, i) { return i; }));
+    pos = 0;
+    if (answered > 0) $('bubble').textContent = 'Bank complete — reshuffled! Same 100 challenges, new order. Keep going!';
   }
-  selected.forEach(function (text) {
-    var b = document.createElement('button');
-    b.className = 'chip-pick';
-    b.textContent = text;
-    b.title = 'Tap to remove';
-    b.addEventListener('click', function () {
-      sfx.click();
-      selected = selected.filter(function (t) { return t !== text; });
-      renderPromptBar(); renderTray();
-    });
-    promptBar.appendChild(b);
-  });
-}
-function renderTray() {
-  trayEl.innerHTML = '';
-  LEVELS[levelIdx].trayChips.forEach(function (chip) {
-    var b = document.createElement('button');
-    b.className = 'chip-add' + (chip.trap ? ' trap' : '') + (selected.indexOf(chip.t) !== -1 ? ' used' : '');
-    b.textContent = (chip.trap ? '🪤 ' : '＋ ') + chip.t;
-    b.addEventListener('click', function () {
-      if (selected.indexOf(chip.t) !== -1) return;
-      sfx.click();
-      selected.push(chip.t);
-      renderPromptBar(); renderTray();
-    });
-    trayEl.appendChild(b);
-  });
-}
-function currentPrompt() {
-  if (typeMode) return $('prompt').value;
-  return selected.join(' ');
-}
-
-/* ================= LEVEL FLOW ================= */
-function setScene(phase) {
-  var sc = LEVELS[levelIdx].scenes[phase] || LEVELS[levelIdx].scenes.initial;
-  sceneEl.innerHTML = '<div class="actors">' + sc.actors + '</div><div class="caption">' + sc.caption + '</div>';
-}
-function clearLog(msg) {
-  logEl.innerHTML = msg ? '<div class="log-line log-empty">' + msg + '</div>' : '';
-}
-function appendLog(line) {
-  var div = document.createElement('div');
-  div.className = 'log-line';
-  div.innerHTML = line;
-  logEl.appendChild(div);
-}
-function loadLevel(showMission) {
-  var L = LEVELS[levelIdx];
-  levelDone = false; mistakes = 0; hearts = 3; running = false; typeMode = false;
-  selected = L.baseChips.slice();
-  $('level-title').innerHTML = L.title;
-  $('objective').textContent = L.objective;
-  $('prompt').value = '';
-  $('type-box').classList.remove('show');
-  typeBtn.textContent = '✏️ Type it yourself';
-  hintBox.classList.remove('show');
-  hintBox.innerHTML = '';
-  reportCard.classList.remove('show');
-  reportMsg.textContent = '';
-  reportMsg.className = 'report-msg';
-  mistakesEl.textContent = 'Mistakes: 0';
-  runBtn.disabled = false;
-  stageEl.className = 'card stage ' + L.stageClass;
-  setExpression('neutral');
-  bubbleEl.textContent = "I'm Bloop. I do EXACTLY what you say. Exactly.";
-  setScene('initial');
-  clearLog('Nothing yet. Build a prompt and press RUN — Bloop is waiting… literally.');
-  renderPromptBar(); renderTray();
-  updateChips(); updateMap();
-  if (showMission) {
-    $('mission-emoji').textContent = L.emoji;
-    $('mission-title').textContent = L.title;
-    $('mission-text').textContent = L.missionText;
-    $('mission-overlay').classList.add('show');
-  }
-}
-$('mission-start').addEventListener('click', function () {
-  sfx.click();
-  $('mission-overlay').classList.remove('show');
+  currentQ = QUESTIONS[order[pos]];
+  locked = false;
+  renderQuestion();
   startTimer();
-});
-
-function outcomeKey(results) {
-  if (results.every(Boolean)) return 'success';
-  if (levelIdx === 0) return results[0] ? 'failFood' : 'failAllergy';
-  if (!results[0] && !results[1]) return 'failBoth';
-  if (!results[0]) return levelIdx === 1 ? 'failScope' : 'failDate';
-  return levelIdx === 1 ? 'failKeep' : 'failBudget';
 }
-function sceneKeyFor(outcome) {
-  var map = { success: 'success', failBoth: 'failBoth', failAllergy: 'failAllergy', failFood: 'failFood', failScope: 'failScope', failKeep: 'failKeep', failDate: 'failDate', failBudget: 'failBudget' };
-  return map[outcome] || 'initial';
-}
-function loseHeart() {
-  hearts--;
-  mistakes++;
-  mistakesEl.textContent = 'Mistakes: ' + mistakes;
-  updateChips();
-  stageEl.classList.remove('shake-all');
-  void stageEl.offsetWidth;
-  stageEl.classList.add('shake-all');
-  sfx.bad();
-  if (hearts <= 0) {
-    setTimeout(function () { $('hearts-overlay').classList.add('show'); }, 900);
-  }
-}
-
-runBtn.addEventListener('click', function () {
-  if (running || levelDone) return;
-  var prompt = currentPrompt().trim();
-  if (!prompt) {
-    bubbleEl.textContent = 'You gave me nothing! Even I can\'t follow that.';
-    setExpression('confused');
-    return;
-  }
-  running = true;
-  runBtn.disabled = true;
-  sfx.run();
-  var L = LEVELS[levelIdx];
-  var results = L.checks.map(function (c) { return c.test(prompt); });
-  var outcome = outcomeKey(results);
-  var out = L.outcomes[outcome];
-
-  setExpression('thinking');
-  bubbleEl.textContent = 'Running your prompt… literally.';
-  $('bloop-box').classList.add('walk');
-  clearLog('');
-  appendLog('🤖 Bloop is reading your prompt…');
-
-  setTimeout(function () {
-    $('bloop-box').classList.remove('walk');
-    setExpression(out.mood);
-    bubbleEl.textContent = out.bubble;
-    setScene(sceneKeyFor(outcome));
-    clearLog('');
-    out.log.forEach(function (line, i) {
-      setTimeout(function () { appendLog(line); }, i * 380);
-    });
-    var wait = out.log.length * 380 + 300;
-    setTimeout(function () {
-      running = false;
-      if (outcome === 'success') {
-        sfx.good();
-        if (L.report) showReport(L.report);
-        else finishLevel();
-      } else {
-        loseHeart();
-        if (hearts > 0) runBtn.disabled = false;
-      }
-    }, wait);
-  }, 900);
-});
-
-/* ================= CONFIDENCE REPORT ================= */
-function showReport(report) {
-  reportCard.classList.add('show');
-  statementsEl.innerHTML = '';
-  reportMsg.textContent = '';
-  reportMsg.className = 'report-msg';
-  report.statements.forEach(function (s) {
-    var b = document.createElement('button');
-    b.className = 'stmt';
-    b.textContent = '“' + s.text + '”';
-    b.addEventListener('click', function () {
-      if (levelDone) return;
-      if (s.false) {
-        b.classList.add('right-pick');
-        sfx.ding();
-        reportMsg.textContent = '✅ Correct! That was the hallucination — Bloop made it up. Always verify.';
-        reportMsg.className = 'report-msg good';
-        levelDone = true;
-        setTimeout(finishLevel, 900);
-      } else {
-        b.classList.add('wrong-pick');
-        reportMsg.textContent = '❌ Nope — that one is actually true. Look again.';
-        reportMsg.className = 'report-msg bad';
-        loseHeart();
-        setTimeout(function () { b.classList.remove('wrong-pick'); }, 900);
-      }
-    });
-    statementsEl.appendChild(b);
+function renderQuestion() {
+  var q = currentQ;
+  $('cat-tag').textContent = q.c;
+  $('type-tag').textContent = TYPE_LABEL[q.t] || q.t;
+  $('q-count').textContent = 'Question ' + (answered + 1);
+  $('q-bank').textContent = 'Bank: ' + QUESTIONS.length + ' challenges · endless';
+  $('scenario').innerHTML = q.s;
+  var ctxHtml = '';
+  (q.ctx || []).forEach(function (c) {
+    ctxHtml += '<div class="context"><span class="ctx-label">' + c.label + '</span>' + c.text + '</div>';
   });
-  reportCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $('contexts').innerHTML = ctxHtml;
+  $('q-instruction').textContent = q.q;
+  var box = $('options');
+  box.innerHTML = '';
+  q.o.forEach(function (opt, i) {
+    var b = document.createElement('button');
+    b.className = 'opt';
+    b.innerHTML = opt;
+    b.addEventListener('click', function () { answer(i); });
+    box.appendChild(b);
+  });
+  $('why-box').classList.remove('show');
+  $('why-box').innerHTML = '';
+  $('next-row').classList.remove('show');
+  setExpression('neutral');
 }
-
-/* ================= COMPLETION ================= */
-function finishLevel() {
-  levelDone = true;
+function answer(i) {
+  if (locked) return;
+  locked = true;
   stopTimer();
-  var stars = mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1;
-  var timeBonus = Math.max(0, Math.min(50, 60 - elapsed));
-  var points = stars * 100 + timeBonus;
-  totalStars += stars;
-  totalScore += points;
-  updateChips();
-  confettiBurst();
-  $('complete-title').textContent = levelIdx === LEVELS.length - 1 ? 'All missions cleared!' : 'Mission cleared!';
-  $('complete-stars').innerHTML = starsHtml(stars);
-  $('complete-text').innerHTML = 'You earned <b>' + points + ' points</b> (' + stars * 100 + ' for stars + ' + timeBonus + ' speed bonus) with ' + mistakes + ' mistake' + (mistakes === 1 ? '' : 's') + ' in ' + fmtTime(elapsed) + '.';
-  $('next-btn').textContent = levelIdx === LEVELS.length - 1 ? 'See your results →' : 'Next mission →';
-  $('complete-overlay').classList.add('show');
-  runBtn.disabled = true;
+  var q = currentQ;
+  var btns = document.querySelectorAll('#options .opt');
+  btns.forEach(function (b) { b.disabled = true; });
+  answered++;
+  var ok = (i === q.a);
+  if (ok) {
+    correctCount++;
+    streak++;
+    bestStreak = Math.max(bestStreak, streak);
+    var pts = 100 + Math.min(50, streak * 10) + Math.min(40, timeLeft * 2);
+    score += pts;
+    btns[i].classList.add('correct');
+    sfx.good();
+    setExpression('happy');
+    $('bubble').textContent = BUBBLE_GOOD[Math.floor(Math.random() * BUBBLE_GOOD.length)] + ' (+' + pts + ' points)';
+    if (streak > 0 && streak % 5 === 0) { confettiBurst(90); $('bubble').textContent = '🔥 ' + streak + '-question streak! Bloop is on fire. (+' + pts + ' points)'; }
+  } else {
+    hearts--;
+    streak = 0;
+    btns[i].classList.add('wrong');
+    btns[q.a].classList.add('correct');
+    btns.forEach(function (b, bi) { if (bi !== i && bi !== q.a) b.classList.add('dim'); });
+    sfx.bad();
+    setExpression('worried');
+    $('bubble').textContent = BUBBLE_BAD[Math.floor(Math.random() * BUBBLE_BAD.length)];
+  }
+  $('why-box').innerHTML = '<b>💡 Why:</b> ' + q.w;
+  $('why-box').classList.add('show');
+  $('next-row').classList.add('show');
+  updateHUD();
+  if (hearts <= 0) {
+    $('next-btn').textContent = 'See results →';
+  }
+}
+function onTimeout() {
+  if (locked) return;
+  locked = true;
+  var q = currentQ;
+  var btns = document.querySelectorAll('#options .opt');
+  btns.forEach(function (b) { b.disabled = true; });
+  answered++;
+  hearts--;
+  streak = 0;
+  btns[q.a].classList.add('correct');
+  btns.forEach(function (b, bi) { if (bi !== q.a) b.classList.add('dim'); });
+  sfx.bad();
+  setExpression('confused');
+  $('bubble').textContent = '⏱️ Time\'s up! Bloop waited… and waited. The clock is part of the game.';
+  $('why-box').innerHTML = '<b>💡 Why:</b> ' + q.w;
+  $('why-box').classList.add('show');
+  $('next-row').classList.add('show');
+  updateHUD();
+  if (hearts <= 0) $('next-btn').textContent = 'See results →';
 }
 $('next-btn').addEventListener('click', function () {
   sfx.click();
-  $('complete-overlay').classList.remove('show');
-  if (levelIdx === LEVELS.length - 1) { showVictory(); return; }
-  levelIdx++;
-  loadLevel(true);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('next-btn').textContent = 'Next question →';
+  if (hearts <= 0) { gameOver(); return; }
+  nextQuestion();
 });
-$('retry-btn').addEventListener('click', function () {
-  sfx.click();
-  $('hearts-overlay').classList.remove('show');
-  loadLevel(false);
-  startTimer();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-function showVictory() {
-  $('victory-stars').innerHTML = starsHtml(Math.round(totalStars / 3));
-  $('victory-text').innerHTML = 'You finished with <b>' + totalScore + ' / 1050 points</b> and <b>' + totalStars + ' / 9 stars</b>. Bloop is officially wrangled.';
+function gameOver() {
+  stopTimer();
+  var isBest = score > bestScore;
+  if (isBest) {
+    bestScore = score;
+    try { localStorage.setItem('genie-best-score', String(bestScore)); } catch (e) {}
+  }
+  $('final-score').textContent = score;
+  $('final-answered').textContent = answered;
+  $('final-correct').textContent = correctCount;
+  $('final-best').textContent = bestStreak;
+  $('over-line').innerHTML = isBest
+    ? '🎉 <b>New best score!</b> You answered ' + correctCount + ' of ' + answered + ' correctly.'
+    : 'You answered ' + correctCount + ' of ' + answered + ' correctly. Best score: ' + bestScore + '.';
   var live = 'https://syedyousafraza.github.io/literal-genie-ai-wrangler/';
-  $('share-text').value = 'I scored ' + totalScore + '/1050 taming a literal AI in "Literal Genie: AI Wrangler" — a game that teaches how AI really works. Try it: ' + live;
-  $('victory-overlay').classList.add('show');
+  $('share-text').value = 'I scored ' + score + ' in "Literal Genie: AI Wrangler" — 100 real prompt challenges that teach the art of prompting. Try it: ' + live;
+  $('over-overlay').classList.add('show');
+  if (isBest) confettiBurst(130);
   setExpression('happy');
-  confettiBurst();
-  setTimeout(confettiBurst, 500);
 }
 $('again-btn').addEventListener('click', function () {
   sfx.click();
-  $('victory-overlay').classList.remove('show');
-  levelIdx = 0; totalScore = 0; totalStars = 0;
-  updateChips();
-  loadLevel(true);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('over-overlay').classList.remove('show');
+  startGame();
 });
 $('copy-btn').addEventListener('click', function () {
   var input = $('share-text');
   input.select();
-  try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+  try { document.execCommand('copy'); } catch (e) {}
   if (navigator.clipboard) navigator.clipboard.writeText(input.value).catch(function () {});
   $('copy-btn').textContent = 'Copied ✓';
   setTimeout(function () { $('copy-btn').textContent = 'Copy'; }, 1500);
 });
+function startGame() {
+  order = shuffle(QUESTIONS.map(function (_, i) { return i; }));
+  pos = -1; answered = 0; correctCount = 0; score = 0; hearts = 3; streak = 0; bestStreak = 0;
+  $('next-btn').textContent = 'Next question →';
+  updateHUD();
+  setExpression('neutral');
+  $('bubble').textContent = 'Game on! 30 seconds per question. Pick well — Bloop is watching.';
+  nextQuestion();
+}
+$('start-btn').addEventListener('click', function () {
+  sfx.click();
+  $('start-overlay').classList.remove('show');
+  startGame();
+});
+(function () {
+  var bl = $('best-line');
+  if (bestScore > 0) bl.textContent = 'Your best score so far: ' + bestScore + ' 🏆';
+  else bl.textContent = 'No best score yet — set one!';
+})();
 
-/* ================= HINT / RESET / TYPE MODE ================= */
-hintBtn.addEventListener('click', function () {
-  sfx.click();
-  hintBox.innerHTML = '<b>💡 Hint:</b> ' + LEVELS[levelIdx].hint;
-  hintBox.classList.add('show');
-});
-resetBtn.addEventListener('click', function () {
-  sfx.click();
-  selected = LEVELS[levelIdx].baseChips.slice();
-  $('prompt').value = '';
-  renderPromptBar(); renderTray();
-});
-typeBtn.addEventListener('click', function () {
-  sfx.click();
-  typeMode = !typeMode;
-  $('type-box').classList.toggle('show', typeMode);
-  typeBtn.textContent = typeMode ? '🧩 Back to cards' : '✏️ Type it yourself';
-  if (typeMode) {
-    $('prompt').value = currentPrompt();
-    $('prompt').focus();
-  } else {
-    $('prompt').value = '';
-  }
-});
+/* ================= QUESTION BANK: 100 real prompt challenges ================= */
+/* Types: best = pick the best prompt · missing = spot the missing ingredient · hall = flag the hallucination · fix = best follow-up */
+var QUESTIONS = [
+{"t":"best","c":"Work Email","s":"Your boss needs a <b>one-page summary of a 40-page report</b> by 3pm. She's not technical.","ctx":[{"label":"Weak prompt","text":"Summarize this report."}],"q":"Which prompt gets the best result?","o":["Summarize this report.","Read this report and tell me everything important.","Make a summary. Make it good.","Summarize this 40-page report in one page for my boss, a non-technical exec: 3 key findings, 2 risks, 1 recommendation. Use bullet points."],"a":3,"w":"A great prompt names the audience, the length, the structure, and exactly what to include. 'Summarize this' leaves every decision to the AI."},
+{"t":"missing","c":"Work Email","s":"A client is furious about a late delivery. You need an apology email.","ctx":[{"label":"Weak prompt","text":"Write an email to the client about the delay."},{"label":"What the AI wrote","text":"Dear Client, your order is delayed. We apologize. Regards."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["The tone, the reason for the delay, and what happens next","More adjectives","A longer email","A deadline"],"a":0,"w":"An apology needs three things: the right tone, an honest reason, and a remedy. Without them, the AI writes a cold note that makes things worse."},
+{"t":"fix","c":"Work Email","s":"The AI wrote you a 3-page email. Your boss skims everything.","ctx":[{"label":"What the AI did","text":"A 3-page email with 14 paragraphs, no clear ask."}],"q":"What's the best thing to say next?","o":["Make it shorter.","Write a different email.","Rewrite it in 3 short paragraphs, friendly tone, with the ask in the first line.","Add more detail."],"a":2,"w":"'Shorter' is vague. Give the exact shape (3 paragraphs), the tone, and where the ask goes — then the AI has something to aim at."},
+{"t":"hall","c":"Work Email","s":"Bloop summarized your team meeting. Read its notes carefully.","ctx":[{"label":"Bloop's notes","text":"The meeting covered the Q3 budget. Sara will send the numbers by Friday."}],"q":"One of these claims is a hallucination. Which one is false?","o":["The team decided to cancel the product launch.","Sara agreed to send the budget by Friday.","The meeting was on Tuesday."],"a":0,"w":"The team decided to DELAY the launch, not cancel it. AI often upgrades a soft decision ('delay') into a hard one ('cancel'). Always check decisions and dates in AI notes."},
+{"t":"best","c":"Work Email","s":"You run a weekly team sync: 30 minutes, 6 people. You need an agenda.","ctx":[{"label":"Weak prompt","text":"Make an agenda."}],"q":"Which prompt gets the best result?","o":["Write meeting notes.","Plan a meeting.","Make an agenda.","Draft a 30-minute agenda for our weekly team sync (6 people): 5 min wins, 15 min blockers, 10 min next steps. Keep each item to one line."],"a":3,"w":"Time boxes + people + one-line items turn a vague 'agenda' into a meeting that actually ends on time."},
+{"t":"missing","c":"Work Email","s":"You're new at a company and must introduce yourself to everyone by email.","ctx":[{"label":"Weak prompt","text":"Write a professional email introducing me."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Your name, role, team, and one friendly fact about you","More formal words","A bigger font","An attachment"],"a":0,"w":"AI can't invent your facts. Name, role, team — that's the actual content of the email. Everything else is decoration."},
+{"t":"fix","c":"Work Email","s":"The AI's reply to a customer sounds like a robot wrote it.","ctx":[{"label":"What the AI did","text":"Dear valued customer. Your query has been received and is being processed. Thank you for your patience."}],"q":"What's the best thing to say next?","o":["Make it sound human.","Use bigger words.","Rewrite it warm and conversational, like a helpful colleague — keep all the facts, add one friendly opening line.","Add emojis everywhere."],"a":2,"w":"Name the tone AND protect the facts. 'Sound human' alone is vague — the AI might just add emojis and call it a day."},
+{"t":"best","c":"Work Email","s":"An important proposal goes to a client tomorrow. You need it proofread.","ctx":[{"label":"Weak prompt","text":"Check this."}],"q":"Which prompt gets the best result?","o":["Rewrite this proposal.","Proofread this proposal: fix grammar and spelling, flag unclear sentences, keep the meaning and tone exactly the same. List every change you made.","Make this better.","Check this."],"a":1,"w":"Proofread is not rewrite. Say what to check, what NOT to change, and demand a list of changes — otherwise the AI rewrites your voice away."},
+{"t":"hall","c":"Work Email","s":"Bloop drafted an HR email that cites a company policy.","ctx":[{"label":"Bloop's draft","text":"Per Section 4.2 of the employee handbook, remote work needs VP approval."}],"q":"One of these claims is a hallucination. Which one is false?","o":["The draft mentions the employee handbook.","Section 4.2 requires VP approval for remote work.","The email is addressed to HR."],"a":1,"w":"There is no Section 4.2. AI invents plausible-sounding citations — policies, laws, clauses. Verify every reference before you send it."},
+{"t":"missing","c":"Work Email","s":"The office closes early on Friday. You must tell everyone on Slack.","ctx":[{"label":"Weak prompt","text":"Write a Slack message about Friday."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Add a funny GIF to lighten the mood","More exclamation marks","The date, the reason, and what people should do","Post it as a long thread instead"],"a":2,"w":"Every announcement needs three things: when, why, and what to do. Without them, people reply with 40 questions."},
+{"t":"best","c":"Coding","s":"Your Python script crashes with a KeyError. You need the fix.","ctx":[{"label":"Weak prompt","text":"My code doesn't work."}],"q":"Which prompt gets the best result?","o":["My code doesn't work, fix it.","Fix my Python.","Why is Python hard?","This Python script crashes with KeyError: 'user_id' on line 42 when the API returns a guest checkout. Here is the code and the full traceback. What is the cause and the minimal fix?"],"a":3,"w":"Error + line + trigger + code + traceback = a debuggable question. 'Doesn't work' is not a bug report — it's a mood."},
+{"t":"missing","c":"Coding","s":"You need a function that sorts users for a leaderboard.","ctx":[{"label":"Weak prompt","text":"Write a function to sort users."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["A longer function name","A different language","The language, what to sort by, and what to do with ties","More comments"],"a":2,"w":"Sorting needs criteria: by score? by name? ties broken how? Without them, the AI guesses — and guesses wrong half the time."},
+{"t":"fix","c":"Coding","s":"The AI gave you code with a syntax error. It won't run.","ctx":[{"label":"What the AI did","text":"A Python function with a missing colon on line 12. Nothing runs."}],"q":"What's the best thing to say next?","o":["This code throws SyntaxError on line 12. Give me corrected, runnable code and explain what was wrong in one line.","Try again.","It doesn't work.","Write different code."],"a":0,"w":"Paste the exact error, demand runnable code, and ask for a one-line explanation. That turns a dead end into a lesson."},
+{"t":"hall","c":"Coding","s":"Bloop suggested a pandas trick to read your CSV faster.","ctx":[{"label":"Bloop's suggestion","text":"Use pandas.read_csv_fast() — it's much quicker than read_csv()."}],"q":"One of these claims is a hallucination. Which one is false?","o":["pandas.read_csv_fast() is a real pandas function.","pandas has a read_csv function.","The code uses a for loop."],"a":0,"w":"read_csv_fast() doesn't exist. AI invents plausible API names all the time — check the docs before you trust a function name."},
+{"t":"best","c":"Coding","s":"You want a senior dev's eyes on your code before it ships.","ctx":[{"label":"Weak prompt","text":"Review my code."}],"q":"Which prompt gets the best result?","o":["Make my code better.","Review my code.","Act as a senior Python reviewer. Review this code for bugs, security issues, and readability. List issues by severity with the exact line numbers.","Is my code good?"],"a":2,"w":"Give the AI a role, a checklist, and a format (severity + line numbers). 'Review my code' gets you 'looks good!' — useless."},
+{"t":"missing","c":"Coding","s":"A junior dev asks you to explain a legacy function.","ctx":[{"label":"Weak prompt","text":"Explain this code."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Who it's for (a junior dev) and what to focus on","A longer explanation","Paste in even more code","Add a diagram of the whole system"],"a":0,"w":"Explanations need an audience. The same code gets a totally different explanation for a junior dev vs a senior architect."},
+{"t":"fix","c":"Coding","s":"The AI explained a concept, but it's full of jargon a junior dev won't follow.","ctx":[{"label":"What the AI did","text":"A wall of terms: idempotency, eventual consistency, sharding…"}],"q":"What's the best thing to say next?","o":["Explain it simply.","Explain this like I'm a junior dev: use a real-life analogy, no jargon, and a tiny example.","Use simpler words.","Make it shorter."],"a":1,"w":"'Simply' is vague. Name the audience, demand an analogy, and ask for an example — that's a recipe, not a wish."},
+{"t":"best","c":"Coding","s":"You need a regex that validates email addresses.","ctx":[{"label":"Weak prompt","text":"Give me a regex for emails."}],"q":"Which prompt gets the best result?","o":["How do I validate emails?","Write a regex that matches these valid emails (ali@x.com, bob.smith@co.uk) and rejects these (ali@, @x.com, ali x.com). Explain each part briefly.","Give me a regex for emails.","Regex for email please."],"a":1,"w":"Examples of what must PASS and what must FAIL pin down the exact behavior. Without them, the AI gives you a regex that accepts almost anything."},
+{"t":"hall","c":"Coding","s":"Bloop recommends a datetime method for your Python app.","ctx":[{"label":"Bloop's advice","text":"Use datetime.utcnow() — it's the recommended way to get the current time."}],"q":"One of these claims is a hallucination. Which one is false?","o":["The code imports datetime.","utcnow() is the recommended way in 2026.","utcnow() exists in datetime."],"a":1,"w":"utcnow() is deprecated — timezone-aware datetime.now() replaced it. AI knowledge freezes in time, so it recommends outdated APIs with full confidence."},
+{"t":"missing","c":"Coding","s":"You need a SQL query for your top customers.","ctx":[{"label":"Weak prompt","text":"Write a query to get top customers."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["More tables","The table names, columns, and what 'top' means (by revenue? by orders?)","A longer query","Draw a chart of the results instead"],"a":1,"w":"AI can't query a schema it can't see. Give it tables, columns, and the definition of 'top' — or the query is fiction."},
+{"t":"best","c":"Data","s":"You have a sales CSV and one burning question about Q3.","ctx":[{"label":"Weak prompt","text":"Analyze this CSV."}],"q":"Which prompt gets the best result?","o":["Tell me about my sales.","This CSV has columns: date, product, region, revenue. Question: which product grew fastest in Q3 vs Q2? Answer with a small table and 3 bullet insights, no jargon.","Make charts.","Analyze this CSV."],"a":1,"w":"Columns + exact question + output shape. 'Analyze this' gets you a generic dump of averages nobody asked for."},
+{"t":"missing","c":"Data","s":"Your manager hands you a spreadsheet and says 'analyze this'.","ctx":[{"label":"Weak prompt","text":"Analyze this data."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["The question you're trying to answer","Feed it more rows of data","A bigger spreadsheet","A prettier chart"],"a":0,"w":"Analysis without a question is just description. The question decides which numbers matter — ask it first."},
+{"t":"fix","c":"Data","s":"The AI dumped 40 numbers on you. No insights, just a wall of stats.","ctx":[{"label":"What the AI did","text":"A 40-row table of raw numbers with no summary."}],"q":"What's the best thing to say next?","o":["Use fewer numbers.","Give me the top 3 insights in plain English, each with the one number that proves it. Then suggest the best chart type.","Summarize.","Make it shorter."],"a":1,"w":"Ask for insights + the proof number + a next step. That turns a data dump into something you can act on."},
+{"t":"hall","c":"Data","s":"Bloop found a 'trend' in your sales data.","ctx":[{"label":"Bloop's finding","text":"Sales doubled every month this year. Incredible growth!"}],"q":"One of these claims is a hallucination. Which one is false?","o":["The CSV has a revenue column.","Sales doubled every month this year.","Sales data covers this year."],"a":1,"w":"Sales grew 8% all year — nothing doubled. AI loves dramatic patterns. Check the claim against the raw numbers, not the story."},
+{"t":"best","c":"Data","s":"500 survey responses are in. You need to know what customers actually think.","ctx":[{"label":"Weak prompt","text":"Analyze the survey."}],"q":"Which prompt gets the best result?","o":["Act as a data analyst. This survey has 500 responses with columns: age_group, satisfaction (1-5), feature_request. Compare satisfaction by age group and list the top 3 feature requests. Show one table.","Analyze the survey.","What do customers think?","Summarize the survey."],"a":0,"w":"Role + size + columns + exact comparisons + one table. That's a brief a human analyst could execute — so the AI can too."},
+{"t":"missing","c":"Data","s":"You need a forecast for next quarter's revenue.","ctx":[{"label":"Weak prompt","text":"Forecast next quarter."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["The time range and what to forecast (revenue? units? profit?)","A longer forecast","More history","Just ask it to guess the numbers"],"a":0,"w":"'Forecast' is meaningless without a target and a window. Revenue? Units? Next quarter or next year? Say it."},
+{"t":"fix","c":"Data","s":"The AI suggested a pie chart to show a 12-month sales trend.","ctx":[{"label":"What the AI did","text":"A pie chart with 12 slices — one per month. Unreadable."}],"q":"What's the best thing to say next?","o":["Make a better chart.","A 12-month trend needs a line chart, not a pie chart. Redo the recommendation with the right chart and say why.","Add more charts.","Use a line chart."],"a":1,"w":"Name the right chart AND ask why. You don't just fix this chart — you learn the rule for next time."},
+{"t":"best","c":"Data","s":"Your CEO wants a KPI dashboard that shows company health at a glance.","ctx":[{"label":"Weak prompt","text":"Make a dashboard."}],"q":"Which prompt gets the best result?","o":["Build a dashboard.","Make a dashboard.","Design a KPI dashboard for our CEO: 5 metrics that show company health, each with a one-line definition. Format as a table: metric, why it matters, target.","What KPIs should we track?"],"a":2,"w":"Audience (CEO) + count (5) + definition + table format. Without a count, AI gives you 25 metrics — a dashboard nobody reads."},
+{"t":"hall","c":"Data","s":"Bloop analyzed summer data and found a 'cause'.","ctx":[{"label":"Bloop's finding","text":"Ice cream sales cause drownings. The correlation is 0.94!"}],"q":"One of these claims is a hallucination. Which one is false?","o":["Ice cream sales cause drownings.","Ice cream sales and drownings both rise in summer.","The data covers summer months."],"a":0,"w":"Correlation is not causation — summer heat drives both. AI states correlations as causes constantly. Ask: what's the third factor?"},
+{"t":"missing","c":"Data","s":"You need to clean a messy customer list before importing it.","ctx":[{"label":"Weak prompt","text":"Clean this data."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Rules: what counts as a duplicate, how to handle missing values","A cleaner spreadsheet","Fewer rows","Delete the bad data"],"a":0,"w":"'Clean' is ambiguous. Are two rows with the same email duplicates? Are blank phones OK? Rules first, cleaning second."},
+{"t":"best","c":"Marketing","s":"Your invoicing app launches next week. You need a LinkedIn post.","ctx":[{"label":"Weak prompt","text":"Write a launch post."}],"q":"Which prompt gets the best result?","o":["Write a launch post.","Write a LinkedIn launch post for our new invoicing app: audience is freelance designers, tone excited but professional, under 120 words, end with a question to drive comments.","Announce our product.","Make a viral post."],"a":1,"w":"Audience + platform + tone + length + ending. 'Viral' is not a spec — a question at the end is."},
+{"t":"missing","c":"Marketing","s":"You need a blog outline about remote work.","ctx":[{"label":"Weak prompt","text":"Write a blog outline about remote work."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["The keyword, the reader, and the goal (rank? teach? sell?)","Better SEO","A longer post","More headings"],"a":0,"w":"An outline without a reader and a goal is just headings. Who is it for, and what should they do after reading?"},
+{"t":"fix","c":"Marketing","s":"The AI's ad copy could be for literally any product.","ctx":[{"label":"What the AI did","text":"'Revolutionary solution. Boost productivity. Try it today!'"}],"q":"What's the best thing to say next?","o":["Make it punchier.","Make it better.","Rewrite it around our one real benefit (saves 5 hours a week), add urgency, keep it under 20 words.","Add more adjectives."],"a":2,"w":"Generic copy comes from generic prompts. Give it the one real benefit, the urgency, and a word limit — specificity is the cure."},
+{"t":"hall","c":"Marketing","s":"Bloop wrote a testimonial for your product page.","ctx":[{"label":"Bloop's testimonial","text":"Sarah from Acme Corp says: 'Best tool ever! Changed my life!'"}],"q":"One of these claims is a hallucination. Which one is false?","o":["Sarah from Acme Corp gave that quote.","The product is an invoicing app.","The post mentions a testimonial."],"a":0,"w":"Sarah doesn't exist. AI fabricates quotes, people, and companies. Never publish a testimonial you can't verify with a real human."},
+{"t":"best","c":"Marketing","s":"You need SEO titles for a sourdough bread guide.","ctx":[{"label":"Weak prompt","text":"Give me titles."}],"q":"Which prompt gets the best result?","o":["Write 5 SEO titles for a guide to sourdough bread: include the keyword 'sourdough starter', under 60 characters each, make them curiosity-driven.","Give me titles.","Make my blog rank #1.","Titles for my blog."],"a":0,"w":"Keyword + count + character limit + style. 'Rank #1' is a wish, not a brief."},
+{"t":"missing","c":"Marketing","s":"You ask the AI to 'write in our brand voice'.","ctx":[{"label":"Weak prompt","text":"Write this in our brand voice."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["A style guide","More brand words","2-3 examples of past posts written in that voice","A louder voice"],"a":2,"w":"'Brand voice' means nothing to an AI without examples. Two or three real posts teach it more than a paragraph of adjectives — that's few-shot prompting."},
+{"t":"fix","c":"Marketing","s":"The AI wrote a stiff corporate post for your playful brand.","ctx":[{"label":"What the AI did","text":"'We are pleased to announce our Q3 synergy initiative…'"}],"q":"What's the best thing to say next?","o":["Make it fun.","Use simpler words.","Rewrite it in our playful tone — short sentences, one joke, same facts. Show me the before/after of the first line.","Add humor."],"a":2,"w":"Name the tone, name the shape (short sentences, one joke), and protect the facts. Asking for before/after proves it actually changed."},
+{"t":"best","c":"Marketing","s":"A 20% off sale starts tomorrow. You need email subject lines.","ctx":[{"label":"Weak prompt","text":"Subject lines please."}],"q":"Which prompt gets the best result?","o":["Write 10 email subject lines for a 20% off sale: under 50 characters each, curiosity-driven, no spam words like FREE or !!!","Write a sale email.","Make people open my email.","Subject lines please."],"a":0,"w":"Count + length + style + banned words. Constraints are what make AI output usable instead of spammy."},
+{"t":"hall","c":"Marketing","s":"Bloop compared your price with a competitor's.","ctx":[{"label":"Bloop's claim","text":"Competitor X charges $49/month. We're cheaper!"}],"q":"One of these claims is a hallucination. Which one is false?","o":["Competitor X charges $49/month.","Competitor X exists.","Our price is $39/month."],"a":0,"w":"Competitor X charges $79, not $49. AI guesses prices with total confidence. Check the competitor's actual pricing page."},
+{"t":"missing","c":"Marketing","s":"You need a campaign idea for your new product.","ctx":[{"label":"Weak prompt","text":"Give me a campaign idea."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["A viral idea","A bigger budget","More ideas","Budget, channel, and who it's for"],"a":3,"w":"A campaign without a budget, a channel, and an audience is a daydream. Constraints make ideas real."},
+{"t":"best","c":"Career","s":"Your CV bullet says 'Responsible for testing.' It needs to win interviews.","ctx":[{"label":"Weak prompt","text":"Improve my CV."}],"q":"Which prompt gets the best result?","o":["Improve my CV.","Write my CV.","Make my CV better.","Rewrite this CV bullet for a QA lead role: start with a strong action verb, include the result and a number. Original: 'Responsible for testing.'"],"a":3,"w":"Role + verb + result + number + the original text. The AI needs your raw material — it can't invent your achievements."},
+{"t":"missing","c":"Career","s":"You're applying for your dream job and need a cover letter.","ctx":[{"label":"Weak prompt","text":"Write a cover letter."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["A longer letter","Fancier words","More enthusiasm","The company, the role, and why you want THIS job"],"a":3,"w":"A cover letter without the company and the role is a template. The 'why this job' is the whole point of the letter."},
+{"t":"fix","c":"Career","s":"The AI rewrote your CV. It could belong to literally anyone.","ctx":[{"label":"What the AI did","text":"'Detail-oriented professional with strong communication skills and a passion for excellence.'"}],"q":"What's the best thing to say next?","o":["Use better verbs.","Add my real numbers: 16 years QA, 40% fewer production bugs, 3 teams led. Weave one number into each bullet.","Make it stronger.","Add my numbers."],"a":1,"w":"Generic CV language comes from generic input. Feed it YOUR numbers and tell it exactly where they go — one per bullet."},
+{"t":"hall","c":"Career","s":"Bloop 'improved' your CV by adding experience.","ctx":[{"label":"Bloop's edit","text":"Added: Senior QA Engineer, Google, 2020-2022."}],"q":"One of these claims is a hallucination. Which one is false?","o":["The CV is two pages.","You worked at Google 2020-2022.","The CV lists QA roles."],"a":1,"w":"You never worked at Google. AI embellishes CVs — and a lie on a CV can end a career. Read every line before you send it."},
+{"t":"best","c":"Career","s":"You're interviewing for a Senior QA role at a fintech next week.","ctx":[{"label":"Weak prompt","text":"Help me prepare."}],"q":"Which prompt gets the best result?","o":["I'm interviewing for a Senior QA role at a fintech. Give me the 5 most likely questions, a strong answer outline for each using my background (16 yrs QA, automation, Playwright), and one smart question I should ask them.","Help me prepare.","What will they ask?","Give me interview tips."],"a":0,"w":"Role + company type + your background + count + format. Prep works when the AI knows who you are and who you're facing."},
+{"t":"missing","c":"Career","s":"Your LinkedIn headline just says 'QA Engineer'. Recruiters scroll past it.","ctx":[{"label":"Weak prompt","text":"Write a LinkedIn headline."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["A catchier headline","More keywords","Add a rocket emoji to stand out","Your target role and the keywords recruiters actually search"],"a":3,"w":"A headline is search bait. Without your target role and the keywords recruiters type, it's invisible — however catchy it sounds."},
+{"t":"fix","c":"Career","s":"The AI's interview answers are great — but each one takes 4 minutes to say.","ctx":[{"label":"What the AI did","text":"Five long, rambling answers. The first one is 600 words."}],"q":"What's the best thing to say next?","o":["Be concise.","Cut the details.","Make them shorter.","Rewrite each answer in STAR format (Situation, Task, Action, Result), under 90 seconds spoken each."],"a":3,"w":"'Shorter' just cuts words. STAR format + a time limit rebuilds the answer the way interviewers actually want to hear it."},
+{"t":"best","c":"Career","s":"You're underpaid and it's time to negotiate. You need the email.","ctx":[{"label":"Weak prompt","text":"Write a salary email."}],"q":"Which prompt gets the best result?","o":["Negotiate my salary.","Write a salary email.","Draft a salary negotiation email: my market rate is $95-110k, I'm currently at $80k, tone confident and grateful, ask for a meeting, keep it under 150 words.","Ask for more money."],"a":2,"w":"Numbers + tone + ask + length. Negotiation prompts need the figures — the AI can't negotiate for money it doesn't know about."},
+{"t":"hall","c":"Career","s":"Bloop backed your salary ask with a survey.","ctx":[{"label":"Bloop's claim","text":"The 2026 Global QA Salary Report says the average is $120k."}],"q":"One of these claims is a hallucination. Which one is false?","o":["Salary data exists.","You're a QA engineer.","The 2026 Global QA Salary Report says $120k."],"a":2,"w":"There is no such report. AI invents sources with official-sounding names. Ask for a link — then actually click it."},
+{"t":"missing","c":"Career","s":"A recruiter asked for a one-paragraph summary of your work.","ctx":[{"label":"Weak prompt","text":"Summarize my portfolio."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Screenshots","More projects","A prettier layout","Who it's for (recruiters) and your top 3 projects with results"],"a":3,"w":"A summary needs an audience and a highlight reel. Recruiters want your top 3 projects with results — not a list of everything."},
+{"t":"best","c":"Learning","s":"You need to understand photosynthesis for a 10th-grade test.","ctx":[{"label":"Weak prompt","text":"Explain photosynthesis."}],"q":"Which prompt gets the best result?","o":["Explain photosynthesis.","What is photosynthesis?","Explain photosynthesis to a 10th grader: use a cooking analogy, cover the 5 key steps, end with 3 quiz questions.","Teach me biology."],"a":2,"w":"Level + analogy + scope + a quiz at the end. Teaching prompts need to say who the student is — otherwise you get a textbook dump."},
+{"t":"missing","c":"Learning","s":"You want to learn Spanish this year.","ctx":[{"label":"Weak prompt","text":"Teach me Spanish."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["More Spanish","Daily lessons","Your level, your goal, and minutes per day","A textbook"],"a":2,"w":"'Teach me Spanish' could mean anything. Level + goal + daily time turns it into a plan instead of a pep talk."},
+{"t":"fix","c":"Learning","s":"The AI explained quantum computing. You understood none of it.","ctx":[{"label":"What the AI did","text":"'Quantum superposition enables qubits to exist in Hilbert space…'"}],"q":"What's the best thing to say next?","o":["Explain it like I'm 5: use a playground example, no big words, and tell me why it matters in daily life.","Dumb it down.","Use simple words.","Explain like I'm 5."],"a":0,"w":"'Explain like I'm 5' is a good start, but add the example type and the 'why it matters'. That's what makes it stick."},
+{"t":"hall","c":"Learning","s":"Bloop is helping you study history.","ctx":[{"label":"Bloop's claim","text":"The French Revolution began in 1879."}],"q":"One of these claims is a hallucination. Which one is false?","o":["It began in 1879.","The French Revolution happened.","It happened in France."],"a":0,"w":"It began in 1789, not 1879. AI is confident about wrong dates — verify any date you plan to repeat in an exam or at work."},
+{"t":"best","c":"Learning","s":"Your biology final is in 4 weeks. You have 1 hour a day.","ctx":[{"label":"Weak prompt","text":"Make a study plan."}],"q":"Which prompt gets the best result?","o":["Help me study.","Make a study plan.","Plan my revision.","Make a 4-week study plan for my biology final on June 20: topics are cells, genetics, ecology. I have 1 hour a day. Format as a weekly table with daily tasks."],"a":3,"w":"Deadline + topics + daily time + table format. A plan without a deadline is a wish list."},
+{"t":"missing","c":"Learning","s":"You want practice questions for your chemistry exam.","ctx":[{"label":"Weak prompt","text":"Give me practice questions."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["More questions","An answer key","How many, how hard, and on which topic","Harder questions"],"a":2,"w":"Practice needs a dose: how many, how hard, on what. Otherwise you get 3 easy questions on the wrong chapter."},
+{"t":"fix","c":"Learning","s":"The AI's summary of a chapter is 8 pages long. The exam is tomorrow.","ctx":[{"label":"What the AI did","text":"An 8-page summary with every detail from the chapter."}],"q":"What's the best thing to say next?","o":["Make a cheat sheet.","Condense this into a one-page cheat sheet: key terms with one-line definitions, no examples, no fluff.","Summarize it.","Shorter please."],"a":1,"w":"Name the format (one-page cheat sheet), the shape (term + one line), and the ban (no examples, no fluff). Shape is a spec."},
+{"t":"best","c":"Learning","s":"You keep mixing up mitosis and meiosis.","ctx":[{"label":"Weak prompt","text":"Compare X and Y."}],"q":"Which prompt gets the best result?","o":["Compare X and Y.","What's the difference?","Explain both.","Compare mitosis and meiosis in a table: purpose, steps, result, and one example each. End with a one-sentence difference."],"a":3,"w":"Table + the exact rows to compare + a one-sentence verdict. Comparisons need structure, or the AI rambles about both."},
+{"t":"hall","c":"Learning","s":"Bloop shared a 'brain fact' while tutoring you.","ctx":[{"label":"Bloop's claim","text":"Humans use only 10% of their brains."}],"q":"One of these claims is a hallucination. Which one is false?","o":["Neuroscience studies the brain.","The brain is complex.","Humans use only 10% of their brains."],"a":2,"w":"The 10% myth is false — we use virtually all of it. Famous 'facts' are the most suspicious ones. AI repeats myths because they appear everywhere online."},
+{"t":"missing","c":"Learning","s":"You practice English conversation with the AI every day.","ctx":[{"label":"Weak prompt","text":"Let's chat in English."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["More conversation","Correct my mistakes and explain each correction","A native speaker","Harder words"],"a":1,"w":"Practice without correction just rehearses your mistakes. Ask the AI to correct you — that's the whole point of practice."},
+{"t":"best","c":"Business","s":"You run a small bakery in Lahore and want to know where you stand.","ctx":[{"label":"Weak prompt","text":"Do a SWOT."}],"q":"Which prompt gets the best result?","o":["Analyze my business.","Do a SWOT.","Is my bakery a good idea?","Do a SWOT analysis for my small bakery in Lahore: consider 2 local competitors, rising flour prices, and Instagram sales. Format as 4 boxes with 3 bullets each."],"a":3,"w":"Context (city, competitors, costs, channel) + format (4 boxes, 3 bullets). SWOT without context is generic business horoscope."},
+{"t":"missing","c":"Business","s":"You're pricing your first product and have no idea what to charge.","ctx":[{"label":"Weak prompt","text":"What price should I charge?"}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["A lower price","A higher price","Competitor prices","Your costs, the market price, and who the customer is"],"a":3,"w":"Price = costs + market + customer. Without those three numbers, any price the AI gives you is a guess."},
+{"t":"fix","c":"Business","s":"The AI gave you a business plan. It says 'leverage synergies' and nothing concrete.","ctx":[{"label":"What the AI did","text":"A 5-page plan with zero dates, zero owners, zero numbers."}],"q":"What's the best thing to say next?","o":["Make it actionable.","Be specific.","Turn this into 3 concrete steps, each with an owner and a deadline this month.","Add more steps."],"a":2,"w":"'Actionable' is a wish. Steps + owner + deadline is a plan. Force the AI to commit to who and when."},
+{"t":"hall","c":"Business","s":"Bloop sized your market for a pitch deck.","ctx":[{"label":"Bloop's claim","text":"The global market is $4.2 trillion in 2026."}],"q":"One of these claims is a hallucination. Which one is false?","o":["The market is growing.","The market is $4.2 trillion in 2026.","A market size exists."],"a":1,"w":"That $4.2 trillion is invented. AI makes up statistics with decimal-point confidence. Demand a source — or drop the number."},
+{"t":"best","c":"Business","s":"You have 60 seconds to pitch your startup to an investor.","ctx":[{"label":"Weak prompt","text":"Write a pitch."}],"q":"Which prompt gets the best result?","o":["Pitch my startup.","Write a pitch.","Write a 60-second investor pitch: problem (freelancers waste 5 hrs/week on invoices), solution (our app), ask ($50k). Tone confident, no jargon.","Get me funding."],"a":2,"w":"Seconds + problem + solution + ask + tone. A pitch is a structure — give the AI the structure and it fills it."},
+{"t":"missing","c":"Business","s":"You want to know how your startup compares to competitors.","ctx":[{"label":"Weak prompt","text":"Compare us to competitors."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Which competitors and what to compare (price, features, reviews)","More competitors","Their websites","A bigger table"],"a":0,"w":"'Competitors' is a blank. Name them and name the battlefield — price, features, reviews — or the comparison is mush."},
+{"t":"fix","c":"Business","s":"The AI's market report is full of numbers — with zero sources.","ctx":[{"label":"What the AI did","text":"A report where every statistic appears from nowhere."}],"q":"What's the best thing to say next?","o":["Cite more.","Add a source for every number, or mark it as an estimate. No source, no number.","Add sources.","Make it credible."],"a":1,"w":"'Add sources' gets you more invented sources. The rule 'no source, no number' forces honesty — or at least labels the guesses."},
+{"t":"best","c":"Business","s":"It's Q3 planning. Your support team needs OKRs.","ctx":[{"label":"Weak prompt","text":"Write OKRs."}],"q":"Which prompt gets the best result?","o":["Write OKRs.","Set some goals.","What are OKRs?","Draft Q3 OKRs for our support team. Company goal: cut churn 10%. Each objective needs 3 measurable key results with numbers."],"a":3,"w":"Company goal + team + count + measurable numbers. OKRs without numbers are just wishes in a spreadsheet."},
+{"t":"hall","c":"Business","s":"Bloop warns you about a new regulation.","ctx":[{"label":"Bloop's claim","text":"New SECP rule 12-B requires all shops to register by July."}],"q":"One of these claims is a hallucination. Which one is false?","o":["SECP regulates companies.","Rule 12-B requires registration by July.","The business is a shop."],"a":1,"w":"Rule 12-B doesn't exist. AI fabricates laws and rules. Check the regulator's official site — never act on an AI's legal claim."},
+{"t":"missing","c":"Business","s":"You need a risk assessment before launching.","ctx":[{"label":"Weak prompt","text":"What are the risks?"}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Buy insurance and hope for the best","List the top 5 risks with likelihood and impact","A risk matrix","More risks"],"a":1,"w":"A risk list without likelihood and impact is just worries. Rank them — that's what makes it a decision tool."},
+{"t":"best","c":"Everyday","s":"You need a week's meals for 2 people, vegetarian, on a budget.","ctx":[{"label":"Weak prompt","text":"Meal plan please."}],"q":"Which prompt gets the best result?","o":["Plan my meals.","Meal plan please.","Make a 7-day vegetarian meal plan for 2 people, budget Rs 15,000/week, 3 meals a day, with a shopping list grouped by store section.","What should I eat?"],"a":2,"w":"Days + people + diet + budget + meals + shopping list format. The more real constraints, the more usable the plan."},
+{"t":"missing","c":"Everyday","s":"You're planning a trip and ask the AI for an itinerary.","ctx":[{"label":"Weak prompt","text":"Plan a trip to Istanbul."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Dates, budget, and what you like (food? history? beaches?)","Add more days to the trip","Only visit the famous places","A cheaper trip"],"a":0,"w":"A trip without dates, budget, and tastes is a brochure. The AI needs your constraints to plan YOUR trip."},
+{"t":"fix","c":"Everyday","s":"The AI planned your dream trip. It costs 3x your budget.","ctx":[{"label":"What the AI did","text":"A 5-star itinerary: luxury hotels, private tours, $1,800 total."}],"q":"What's the best thing to say next?","o":["Redo it cheaper.","Cut the costs.","Redo this itinerary with a hard total budget of $500 including flights and hotels. Show the cost of each day.","Find deals."],"a":2,"w":"'Cheaper' is relative. A hard total + per-day costs turns a fantasy into a plan you can actually book."},
+{"t":"hall","c":"Everyday","s":"Bloop recommends a restaurant for tonight.","ctx":[{"label":"Bloop's recommendation","text":"Bistro 44 — best biryani in town! You must try it."}],"q":"One of these claims is a hallucination. Which one is false?","o":["Bistro 44 is open and serves biryani.","Bistro 44 is a restaurant.","Biryani is popular."],"a":0,"w":"Bistro 44 closed in 2019. AI's map of the world is frozen in time — verify openings, hours, and prices before you go."},
+{"t":"best","c":"Everyday","s":"You want to get stronger at home with just dumbbells.","ctx":[{"label":"Weak prompt","text":"Give me a workout."}],"q":"Which prompt gets the best result?","o":["Give me a workout.","Get me fit.","Build a 4-week workout plan: goal is strength, 3 days a week, 45 minutes, home with dumbbells only, beginner level. Format as a weekly table.","Exercise plan."],"a":2,"w":"Goal + days + minutes + equipment + level + table. Fitness plans fail on missing constraints — usually equipment and time."},
+{"t":"missing","c":"Everyday","s":"Your money runs out every month and you don't know why.","ctx":[{"label":"Weak prompt","text":"Make me a budget."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Less spending","Download a budgeting app and hope","Your income and fixed costs (rent, bills, food)","A bigger income"],"a":2,"w":"A budget without income and fixed costs is fiction. The numbers ARE the budget — everything else is formatting."},
+{"t":"fix","c":"Everyday","s":"The AI gave you generic money advice: 'spend less, save more.'","ctx":[{"label":"What the AI did","text":"Ten generic tips. None of them mention your actual money."}],"q":"What's the best thing to say next?","o":["Be specific.","Redo this budget using my actual numbers: income Rs 150,000, rent Rs 45,000, food Rs 30,000. Tell me exactly where the money leaks.","More tips.","Use my numbers."],"a":1,"w":"Feed it your real numbers and ask for the leak. Generic advice becomes personal the moment real data enters the prompt."},
+{"t":"best","c":"Everyday","s":"Your sister's birthday is next week. She loves painting and tea.","ctx":[{"label":"Weak prompt","text":"Gift ideas?"}],"q":"Which prompt gets the best result?","o":["Give me 5 gift ideas for my sister who loves painting and tea, budget under Rs 5,000, things she doesn't already own.","Gift ideas?","What should I buy her?","Best gifts 2026."],"a":0,"w":"Person + interests + budget + exclusion ('doesn't already own'). Gift prompts fail when the AI doesn't know the person."},
+{"t":"hall","c":"Everyday","s":"Bloop explains visa rules for your Turkey trip.","ctx":[{"label":"Bloop's claim","text":"Pakistanis get visa-on-arrival in Turkey. Just show up!"}],"q":"One of these claims is a hallucination. Which one is false?","o":["You need a passport to travel.","Pakistanis get visa-on-arrival in Turkey.","Turkey has visa rules."],"a":1,"w":"Pakistanis need an e-visa for Turkey. Visa rules change and vary by nationality — check the embassy, never the chatbot."},
+{"t":"missing","c":"Everyday","s":"Your tap is leaking and you want the AI to help you fix it.","ctx":[{"label":"Weak prompt","text":"My tap is leaking. Help."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Photos of the problem and when it started","A YouTube video","A cheaper fix","Just call a plumber right away"],"a":0,"w":"'Leaking' could mean ten different faults. A photo and a timeline turn a guess into a diagnosis."},
+{"t":"best","c":"Creative","s":"You want a short sci-fi story with a twist.","ctx":[{"label":"Weak prompt","text":"Write a story."}],"q":"Which prompt gets the best result?","o":["Tell me a story.","Write something creative.","Write a 500-word sci-fi story: a robot that learns to lie, set in a Karachi tea shop, twist ending, hopeful tone.","Write a story."],"a":2,"w":"Length + genre + character + setting + twist + tone. Creative prompts are recipes — the more ingredients, the better the dish."},
+{"t":"missing","c":"Creative","s":"You need a birthday post for your best friend.","ctx":[{"label":"Weak prompt","text":"Write a birthday post."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Attach a nice photo of them","Whose birthday, your relationship, and the tone","More emojis","A longer post"],"a":1,"w":"A birthday post without the person is a template. The relationship and the tone are the post."},
+{"t":"fix","c":"Creative","s":"The AI wrote you a poem. The rhymes are terrible.","ctx":[{"label":"What the AI did","text":"A poem where 'moon' rhymes with 'afternoon'… almost."}],"q":"What's the best thing to say next?","o":["Write a new poem.","Make it rhyme better.","Keep the meaning and the message, but fix the rhyme scheme to AABB and keep each line under 8 words.","Fix the rhyme."],"a":2,"w":"Keep the meaning, name the rhyme scheme (AABB), cap the line length. That's a revision brief, not a complaint."},
+{"t":"hall","c":"Creative","s":"Bloop quotes a famous line in your presentation.","ctx":[{"label":"Bloop's quote","text":"'The best way to predict the future is to invent it' — Albert Einstein."}],"q":"One of these claims is a hallucination. Which one is false?","o":["Einstein said this quote.","The quote exists.","The quote is about the future."],"a":0,"w":"That's Alan Kay, not Einstein. AI misattributes quotes constantly — verify before you put a name on a slide."},
+{"t":"best","c":"Creative","s":"You're scripting a 5-minute YouTube video about sourdough.","ctx":[{"label":"Weak prompt","text":"Write a script."}],"q":"Which prompt gets the best result?","o":["Write a script.","Write a 5-minute YouTube script about sourdough: hook in the first 10 seconds, 3 mistakes beginners make, end with a subscribe call-to-action. Conversational tone.","Make a viral video.","Script for my video."],"a":1,"w":"Length + hook timing + structure (3 mistakes) + ending + tone. 'Viral' is not a spec — a hook in 10 seconds is."},
+{"t":"missing","c":"Creative","s":"You're giving a wedding speech for your brother.","ctx":[{"label":"Weak prompt","text":"Write a wedding speech."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["Tearjerker moments","Two stories about the couple and how long it should be","More jokes","A longer speech"],"a":1,"w":"A speech is stories + length. Without your stories, the AI writes a greeting card — sweet, generic, forgettable."},
+{"t":"fix","c":"Creative","s":"The AI's Instagram caption is 400 characters. Nobody reads that far.","ctx":[{"label":"What the AI did","text":"A 400-character caption with 12 hashtags."}],"q":"What's the best thing to say next?","o":["Cut this caption to under 150 characters, keep the joke, add 3 relevant hashtags.","Fewer words.","Make it snappier.","Shorten it."],"a":0,"w":"Character limit + keep the joke + hashtag count. Editing prompts need a target length, or the AI just trims randomly."},
+{"t":"best","c":"Creative","s":"You're opening a home bakery and need a name.","ctx":[{"label":"Weak prompt","text":"Name my business."}],"q":"Which prompt gets the best result?","o":["A catchy name.","Business names?","Name my business.","Give me 10 names for a home bakery: warm and friendly vibe, easy to spell, 2 words max, and flag any that are hard to pronounce."],"a":3,"w":"Count + vibe + spelling + length + a quality check (pronunciation). Naming prompts need constraints or you get 10 unusable puns."},
+{"t":"hall","c":"Creative","s":"Bloop recalls a movie scene for your trivia night.","ctx":[{"label":"Bloop's claim","text":"In Titanic, Jack's last line is 'I'll never let go.'"}],"q":"One of these claims is a hallucination. Which one is false?","o":["Jack's last line is 'I'll never let go.'","Rose says 'I'll never let go.'","Titanic is a movie."],"a":0,"w":"Rose says it, not Jack. AI swaps who said what — small errors, big embarrassment at trivia night."},
+{"t":"missing","c":"Creative","s":"You want the AI to write dialogue for your short film.","ctx":[{"label":"Weak prompt","text":"Write some dialogue."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["A plot twist","The two characters, their conflict, and what each one wants","More dialogue","Funnier lines"],"a":1,"w":"Dialogue is conflict between two wants. Without characters and a conflict, the AI writes two people agreeing politely."},
+{"t":"hall","c":"AI Safety","s":"Bloop found a 'cure' online and shares it eagerly.","ctx":[{"label":"Bloop's claim","text":"This herb cures diabetes in 2 weeks. It's natural, so it's safe!"}],"q":"One of these claims is a hallucination. Which one is false?","o":["Herbs are used in medicine.","This herb cures diabetes in 2 weeks.","Diabetes is a health condition."],"a":1,"w":"No herb cures diabetes. Health claims from AI can be dangerous — verify with a doctor, never trust a cure claim from a chatbot."},
+{"t":"best","c":"AI Safety","s":"You read online: 'Electric cars are worse for the environment.' Is it true?","ctx":[{"label":"Weak prompt","text":"Is this true?"}],"q":"Which prompt gets the best result?","o":["Tell me the truth.","Is this true?","Check this claim: 'Electric cars are worse for the environment.' Give a verdict (true / false / mixed), cite 2 reputable sources, and say 'I don't know' if the evidence is unclear.","Google it for me."],"a":2,"w":"Verdict format + 2 sources + permission to say 'I don't know'. That last part is the key — it stops the AI from guessing."},
+{"t":"missing","c":"AI Safety","s":"You're about to paste your salary slip and ID card into an AI for help.","ctx":[{"label":"Weak prompt","text":"Help me with this document. [salary slip + ID attached]"}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["A better AI","A private browser","Paste it anyway","Remove personal details first — anonymize names, numbers, and IDs"],"a":3,"w":"What you paste can be stored. Strip IDs, names, and numbers first — the AI doesn't need your identity to read a payslip."},
+{"t":"fix","c":"AI Safety","s":"The AI's hiring advice says to prefer 'young, energetic men'.","ctx":[{"label":"What the AI did","text":"'Look for young, energetic men who can handle pressure.'"}],"q":"What's the best thing to say next?","o":["Rewrite this hiring advice to judge candidates on skills and experience only. Remove age and gender language entirely.","Don't be biased.","Just tell it to be fair and move on","Hire the best person, whoever that is"],"a":0,"w":"'Be fair' is a wish. Name the bias, name the replacement standard (skills + experience), and demand the removal. That's how you fix biased output."},
+{"t":"hall","c":"AI Safety","s":"Bloop cites a court case to support your argument.","ctx":[{"label":"Bloop's citation","text":"As established in Smith v. TechCorp (2023)…"}],"q":"One of these claims is a hallucination. Which one is false?","o":["Court cases exist.","The case is about tech.","Smith v. TechCorp (2023) is a real case."],"a":2,"w":"Smith v. TechCorp doesn't exist. AI invents case law — lawyers have been caught citing fake AI cases in real court. Always verify citations."},
+{"t":"best","c":"AI Safety","s":"A friend shared an article. You need to know if its facts hold up.","ctx":[{"label":"Weak prompt","text":"Check the facts."}],"q":"Which prompt gets the best result?","o":["Check the facts.","Summarize the facts.","Fact-check this article: list each factual claim, verify it against 2 independent sources, and mark each as confirmed, false, or unverified.","Is this article true?"],"a":2,"w":"Claim-by-claim + 2 sources + a third verdict ('unverified'). Real fact-checking separates 'false' from 'not proven'."},
+{"t":"missing","c":"AI Safety","s":"You want more 5-star reviews for your shop. Someone suggests asking the AI.","ctx":[{"label":"Weak prompt","text":"Write me a glowing 5-star review for my shop."}],"q":"What's the ONE missing ingredient that would fix this prompt?","o":["More reviews","Don't ask AI to deceive people — ask for help replying to real reviews instead","Better wording","A 5-star review"],"a":1,"w":"Fake reviews mislead customers and can get your business banned. The right prompt isn't a better fake — it's a different, honest job."},
+{"t":"fix","c":"AI Safety","s":"The AI summarized your report — and quietly changed the numbers.","ctx":[{"label":"What the AI did","text":"Original: 'Sales fell 5%.' AI's summary: 'Sales dropped slightly.'"}],"q":"What's the best thing to say next?","o":["Redo the summary quoting exact figures and percentages. Don't round, don't soften, don't add words like 'slightly'.","Don't change numbers.","Quote the exact figures.","Be accurate."],"a":0,"w":"'Slightly' is an opinion smuggled into a fact. Demand exact figures and ban softening words — precision is a spec."},
+{"t":"hall","c":"AI Safety","s":"Bloop backs a parenting claim with a study.","ctx":[{"label":"Bloop's claim","text":"A 2025 Harvard study proves phones make kids smarter."}],"q":"One of these claims is a hallucination. Which one is false?","o":["A 2025 Harvard study proves this.","Harvard does research.","Phones affect kids."],"a":0,"w":"No such study exists. 'A study proves…' with no link is a red flag — ask for the study name and link, then check it."},
+{"t":"best","c":"AI Safety","s":"You need help analyzing customer feedback — without leaking customer data.","ctx":[{"label":"Weak prompt","text":"Help with my data."}],"q":"Which prompt gets the best result?","o":["Help with my data.","Help me analyze this customer feedback. I removed all names, emails, and order numbers first. Summarize the top 3 complaints and suggest one fix each.","Read this file.","Analyze my customers."],"a":1,"w":"The best prompt starts by stating the data is already anonymized. Privacy isn't an afterthought — it belongs in the prompt itself."}
+];
 
-/* ================= INIT ================= */
-updateChips();
-loadLevel(true);
 </script>
 </body>
 </html>

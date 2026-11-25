@@ -1,41 +1,54 @@
 # 🧞 Literal Genie: AI Wrangler
 
-A puzzle game that teaches how AI *really* works — by letting you wrangle Bloop, a robot that follows your words **exactly**, including the parts you forgot to say.
+A game that teaches the **art of prompting** — with 100 real-world challenges. Pick the best prompt, spot the hallucination, fix the follow-up, and learn why the right words matter.
 
 **Play it live:** https://syedyousafraza.github.io/literal-genie-ai-wrangler/
 
 ## The idea
 
-Coding isn't the skill anymore — *telling the AI exactly what you mean* is. Each level gives Bloop a job and a flawed starter prompt. Bloop takes it literally, with funny (and sometimes disastrous) results. To pass, you must:
+Coding isn't the skill anymore — *telling the AI exactly what you mean* is. Every question is a real situation — a boss who needs a summary, a crashing Python script, a job interview, a business pitch, a birthday post — where a weak prompt gets a bad result and a good prompt gets a great one. Bloop, the literal robot, reacts to every answer. And after every question, the game explains **why** the best prompt wins.
 
-1. **Write a clear prompt** — name the allergy, the budget, the date, the exceptions.
-2. **Check its work** — Bloop's Confidence Report contains a hallucination. Spot the fake fact before you trust it.
+## The 100-question bank
 
-## The 3 levels
+10 categories × 10 challenges, in random order, endless play (the bank reshuffles when you finish it):
 
-| Level | Skill | The trap |
-|---|---|---|
-| 1 · Specificity | Say what you mean | "Make a popular sandwich" → PB&J for a peanut-allergic customer |
-| 2 · Edge Cases | Name the exceptions | "Remove everything on the floor" → the sofa goes out the window |
-| 3 · Verification | Check the output | A $250 flight for next year… plus "free teleportation" |
+| Category | What you'll learn |
+|---|---|
+| Work Email | Audience, length, structure — and what an apology actually needs |
+| Coding | Bug reports, examples that pass AND fail, roles for reviewers |
+| Data | Ask a question before you analyze; check the claim against the numbers |
+| Marketing | Audience + tone + constraints; examples beat adjectives |
+| Career | CVs need numbers; interviews need STAR, not essays |
+| Learning | Level + analogy + quiz; practice needs correction |
+| Business | Context + format; "no source, no number" |
+| Everyday | Real constraints (budget, dates, equipment) make plans usable |
+| Creative | Prompts are recipes: length, genre, setting, twist, tone |
+| AI Safety | Hallucinations, fake sources, bias, and keeping your data private |
+
+## 4 challenge types
+
+| Type | The skill |
+|---|---|
+| 🎯 Pick the best prompt | Choose the prompt a pro would actually send |
+| 🧩 What's missing? | Spot the ONE ingredient that fixes a weak prompt |
+| 🕵️ Spot the hallucination | AI lies confidently — catch the fake fact |
+| 🔧 Fix the follow-up | The AI messed up. What do you say next? |
 
 ## See it working
 
-Bloop, mid-fail on Level 1 — smug, and dangerously wrong:
+Bloop, mid-game on a hallucination challenge:
 
 ![Literal Genie gameplay](docs/screenshots/gameplay.png)
 
 ## Features
 
-- **Build prompts by tapping cards** — deck-builder style instruction cards, including trap cards (peanut butter, "everything", first class) that look helpful and aren't
-- **Or type it yourself** — an expert mode for free-text prompts
-- Bloop the robot, with expressions that change: thinking, confused, smug, happy, worried — and he walks across the scene when he runs your prompt
-- **Hearts, timer and speed bonuses** — 3 hearts per mission, a ticking clock, and points for fast, clean play (max 1050)
-- Animated scenes that show what Bloop actually did — including a sofa flying out the window
-- Sound effects (with mute) and confetti on every win
-- Step-by-step radio log for every run, plus a Hint button on every mission
-- Confidence Reports — flag the hallucination to pass
-- Star rating (up to 3 per mission) and a victory screen with a ready-to-share score
+- **100 verified challenges** — every question machine-checked (answer in range, no duplicates, correct answers spread across all positions so you can't guess by position)
+- **A "Why" lesson after every question** — the learning payload, in plain words
+- **Endless random play** — shuffled order, bank reshuffles when complete
+- **Hearts, streaks and a 30-second timer** — 3 hearts, streak bonuses, speed bonuses, confetti on streaks and new best scores
+- **Best score saved** on your device (localStorage)
+- Bloop the robot, with expressions that change: thinking, confused, smug, happy, worried
+- Sound effects (with mute) and a shareable score for LinkedIn
 
 ## Run it yourself
 
